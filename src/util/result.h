@@ -76,19 +76,14 @@ namespace stoat::util {
         friend ErrHelper<O> err(O v);
     };
 
-    template <typename T, typename... Args>
-    [[nodiscard]] ErrHelper<T> err(Args&&... args) {
-        return ErrHelper<T>(std::forward<Args>(args)...);
+    template <typename E, typename... Args>
+    [[nodiscard]] ErrHelper<E> err(Args&&... args) {
+        return ErrHelper<E>(std::forward<Args>(args)...);
     }
 
-    template <typename T>
-    [[nodiscard]] ErrHelper<T> err(T v) {
-        return ErrHelper<T>(std::move(v));
-    }
-
-    template <typename T>
-    [[nodiscard]] ErrHelper<std::remove_reference_t<T>> err(const T& t) {
-        return ErrHelper<std::remove_reference_t<T>>(std::forward<T>(t));
+    template <typename E>
+    [[nodiscard]] ErrHelper<E> err(E v) {
+        return ErrHelper<E>(std::move(v));
     }
 
     struct BadResultException : public std::logic_error {
