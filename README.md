@@ -1,0 +1,3 @@
+# Stoat
+
+USI shogi engine
