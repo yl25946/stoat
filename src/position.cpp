@@ -19,6 +19,118 @@
 #include "position.h"
 
 namespace stoat {
+    namespace {
+        constexpr i32 PawnHandBits = 5;
+        constexpr i32 LanceHandBits = 3;
+        constexpr i32 KnightHandBits = 3;
+        constexpr i32 SilverHandBits = 3;
+        constexpr i32 GoldHandBits = 3;
+        constexpr i32 BishopHandBits = 2;
+        constexpr i32 RookHandBits = 2;
+
+        constexpr i32 PawnHandOffset = 0;
+        constexpr i32 LanceHandOffset = PawnHandOffset + PawnHandBits;
+        constexpr i32 KnightHandOffset = LanceHandOffset + LanceHandBits;
+        constexpr i32 SilverHandOffset = KnightHandOffset + KnightHandBits;
+        constexpr i32 GoldHandOffset = SilverHandOffset + SilverHandBits;
+        constexpr i32 BishopHandOffset = GoldHandOffset + GoldHandBits;
+        constexpr i32 RookHandOffset = BishopHandOffset + BishopHandBits;
+
+        static_assert(RookHandOffset + RookHandBits <= 32);
+
+        constexpr auto kHandOffsets = [] {
+            std::array<i32, PieceTypes::kCount> offsets{};
+            offsets.fill(-1);
+
+            offsets[PieceTypes::kPawn.idx()] = PawnHandOffset;
+            offsets[PieceTypes::kLance.idx()] = LanceHandOffset;
+            offsets[PieceTypes::kKnight.idx()] = KnightHandOffset;
+            offsets[PieceTypes::kSilver.idx()] = SilverHandOffset;
+            offsets[PieceTypes::kGold.idx()] = GoldHandOffset;
+            offsets[PieceTypes::kBishop.idx()] = BishopHandOffset;
+            offsets[PieceTypes::kRook.idx()] = RookHandOffset;
+
+            return offsets;
+        }();
+
+        constexpr auto kHandMasks = [] {
+            std::array<u32, PieceTypes::kCount> masks{};
+
+            masks[PieceTypes::kPawn.idx()] = ((1 << PawnHandBits) - 1) << PawnHandOffset;
+            masks[PieceTypes::kLance.idx()] = ((1 << LanceHandBits) - 1) << LanceHandOffset;
+            masks[PieceTypes::kKnight.idx()] = ((1 << KnightHandBits) - 1) << KnightHandOffset;
+            masks[PieceTypes::kSilver.idx()] = ((1 << SilverHandBits) - 1) << SilverHandOffset;
+            masks[PieceTypes::kGold.idx()] = ((1 << GoldHandBits) - 1) << GoldHandOffset;
+            masks[PieceTypes::kBishop.idx()] = ((1 << BishopHandBits) - 1) << BishopHandOffset;
+            masks[PieceTypes::kRook.idx()] = ((1 << RookHandBits) - 1) << RookHandOffset;
+
+            return masks;
+        }();
+    } // namespace
+
+    u32 Hand::count(PieceType pt) const {
+        assert(pt);
+
+        const auto offset = kHandOffsets[pt.idx()];
+        const auto mask = kHandMasks[pt.idx()];
+
+        assert(offset != -1);
+
+        return (m_hand & mask) >> offset;
+    }
+
+    void Hand::increment(PieceType pt) {
+        assert(pt);
+        const auto curr = count(pt);
+        assert(curr < (kHandMasks[pt.idx()] >> kHandOffsets[pt.idx()]));
+        set(pt, curr + 1);
+    }
+
+    void Hand::decrement(PieceType pt) {
+        assert(pt);
+        const auto curr = count(pt);
+        assert(curr > 0);
+        set(pt, curr - 1);
+    }
+
+    void Hand::set(PieceType pt, u32 count) {
+        assert(pt);
+
+        const auto offset = kHandOffsets[pt.idx()];
+        const auto mask = kHandMasks[pt.idx()];
+
+        assert(offset != -1);
+        assert(count <= (mask >> offset));
+
+        m_hand = (m_hand & ~mask) | (count << offset);
+    }
+
+    std::ostream& operator<<(std::ostream& stream, const Hand& hand) {
+        const auto print = [&stream, &hand](PieceType pt) {
+            const auto count = hand.count(pt);
+
+            if (count == 0) {
+                return;
+            }
+
+            if (count > 1) {
+                stream << count;
+            }
+
+            stream << pt;
+        };
+
+        print(PieceTypes::kRook);
+        print(PieceTypes::kBishop);
+        print(PieceTypes::kGold);
+        print(PieceTypes::kSilver);
+        print(PieceTypes::kKnight);
+        print(PieceTypes::kLance);
+        print(PieceTypes::kPawn);
+
+        return stream;
+    }
+
     Position::Position() {
         m_mailbox.fill(Pieces::kNone);
     }
@@ -68,7 +180,7 @@ namespace stoat {
                 const auto piece = pos.pieceOn(Square::fromFileRank(file, rank));
 
                 if (piece) {
-                    stream << " |" << piece;
+                    stream << " |" << (!piece.type().isPromoted() ? " " : "") << piece;
                 } else {
                     stream << " |  ";
                 }
@@ -78,7 +190,10 @@ namespace stoat {
             stream << "\n +---+---+---+---+---+---+---+---+---+\n";
         }
 
-        stream << "\n" << (pos.stm() == Colors::kBlack ? "Black" : "White") << " to move\n";
+        stream << "\nBlack pieces in hand: " << pos.hand(Colors::kBlack);
+        stream << "\nWhite pieces in hand: " << pos.hand(Colors::kWhite);
+
+        stream << "\n\n" << (pos.stm() == Colors::kBlack ? "Black" : "White") << " to move";
 
         return stream;
     }

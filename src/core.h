@@ -127,6 +127,25 @@ namespace stoat {
             }
         }
 
+        [[nodiscard]] constexpr PieceType unpromoted() const {
+            switch (m_id) {
+                case kPromotedPawnId:
+                    return PieceType{kPawnId};
+                case kPromotedLanceId:
+                    return PieceType{kLanceId};
+                case kPromotedKnightId:
+                    return PieceType{kKnightId};
+                case kPromotedSilverId:
+                    return PieceType{kSilverId};
+                case kPromotedBishopId:
+                    return PieceType{kBishopId};
+                case kPromotedRookId:
+                    return PieceType{kRookId};
+                default:
+                    return *this;
+            }
+        }
+
         [[nodiscard]] static constexpr PieceType fromRaw(u8 id) {
             assert(id <= kNoneId);
             return PieceType{id};
@@ -201,16 +220,16 @@ namespace stoat {
         friend inline std::ostream& operator<<(std::ostream& stream, PieceType pt) {
             switch (pt.raw()) {
                 case kPawnId:
-                    stream << " P";
+                    stream << "P";
                     break;
                 case kPromotedPawnId:
                     stream << "+P";
                     break;
                 case kLanceId:
-                    stream << " L";
+                    stream << "L";
                     break;
                 case kKnightId:
-                    stream << " N";
+                    stream << "N";
                     break;
                 case kPromotedLanceId:
                     stream << "+L";
@@ -219,19 +238,19 @@ namespace stoat {
                     stream << "+N";
                     break;
                 case kSilverId:
-                    stream << " S";
+                    stream << "S";
                     break;
                 case kPromotedSilverId:
                     stream << "+S";
                     break;
                 case kGoldId:
-                    stream << " G";
+                    stream << "G";
                     break;
                 case kBishopId:
-                    stream << " B";
+                    stream << "B";
                     break;
                 case kRookId:
-                    stream << " R";
+                    stream << "R";
                     break;
                 case kPromotedBishopId:
                     stream << "+B";
@@ -240,10 +259,10 @@ namespace stoat {
                     stream << "+R";
                     break;
                 case kKingId:
-                    stream << " K";
+                    stream << "K";
                     break;
                 default:
-                    stream << " ?";
+                    stream << "?";
                     break;
             }
 
@@ -415,10 +434,10 @@ namespace stoat {
         friend inline std::ostream& operator<<(std::ostream& stream, Piece piece) {
             switch (piece.raw()) {
                 case kBlackPawnId:
-                    stream << " P";
+                    stream << "P";
                     break;
                 case kWhitePawnId:
-                    stream << " p";
+                    stream << "p";
                     break;
                 case kBlackPromotedPawnId:
                     stream << "+P";
@@ -427,16 +446,16 @@ namespace stoat {
                     stream << "+p";
                     break;
                 case kBlackLanceId:
-                    stream << " L";
+                    stream << "L";
                     break;
                 case kWhiteLanceId:
-                    stream << " l";
+                    stream << "l";
                     break;
                 case kBlackKnightId:
-                    stream << " N";
+                    stream << "N";
                     break;
                 case kWhiteKnightId:
-                    stream << " n";
+                    stream << "n";
                     break;
                 case kBlackPromotedLanceId:
                     stream << "+L";
@@ -451,10 +470,10 @@ namespace stoat {
                     stream << "+n";
                     break;
                 case kBlackSilverId:
-                    stream << " S";
+                    stream << "S";
                     break;
                 case kWhiteSilverId:
-                    stream << " s";
+                    stream << "s";
                     break;
                 case kBlackPromotedSilverId:
                     stream << "+S";
@@ -463,22 +482,22 @@ namespace stoat {
                     stream << "+s";
                     break;
                 case kBlackGoldId:
-                    stream << " G";
+                    stream << "G";
                     break;
                 case kWhiteGoldId:
-                    stream << " g";
+                    stream << "g";
                     break;
                 case kBlackBishopId:
-                    stream << " B";
+                    stream << "B";
                     break;
                 case kWhiteBishopId:
-                    stream << " b";
+                    stream << "b";
                     break;
                 case kBlackRookId:
-                    stream << " R";
+                    stream << "R";
                     break;
                 case kWhiteRookId:
-                    stream << " r";
+                    stream << "r";
                     break;
                 case kBlackPromotedBishopId:
                     stream << "+B";
@@ -493,13 +512,13 @@ namespace stoat {
                     stream << "+r";
                     break;
                 case kBlackKingId:
-                    stream << " K";
+                    stream << "K";
                     break;
                 case kWhiteKingId:
-                    stream << " k";
+                    stream << "k";
                     break;
                 default:
-                    stream << " ?";
+                    stream << "?";
                     break;
             }
 

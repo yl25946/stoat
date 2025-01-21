@@ -26,6 +26,21 @@
 #include "bitboard.h"
 
 namespace stoat {
+    class Hand {
+    public:
+        [[nodiscard]] u32 count(PieceType pt) const;
+
+        void increment(PieceType pt);
+        void decrement(PieceType pt);
+
+        void set(PieceType pt, u32 count);
+
+    private:
+        u32 m_hand{};
+
+        friend std::ostream& operator<<(std::ostream& stream, const Hand& hand);
+    };
+
     class Position {
     public:
         Position();
@@ -57,16 +72,17 @@ namespace stoat {
             return m_mailbox[square.idx()];
         }
 
+        [[nodiscard]] inline const Hand& hand(Color color) const {
+            assert(color);
+            return m_hands[color.idx()];
+        }
+
         [[nodiscard]] inline Color stm() const {
             return m_stm;
         }
 
-        [[nodiscard]] inline u32 halfmoves() const {
-            return m_halfmoves;
-        }
-
-        [[nodiscard]] inline u32 fullmoves() const {
-            return m_fullmoves;
+        [[nodiscard]] inline u32 moveCount() const {
+            return m_moveCount;
         }
 
         [[nodiscard]] bool operator==(const Position&) const = default;
@@ -84,10 +100,11 @@ namespace stoat {
 
         std::array<Piece, Squares::kCount> m_mailbox{};
 
+        std::array<Hand, Colors::kCount> m_hands{};
+
         Color m_stm{Colors::kBlack};
 
-        u8 m_halfmoves{};
-        u16 m_fullmoves{1};
+        u16 m_moveCount{1};
 
         void regen();
     };
