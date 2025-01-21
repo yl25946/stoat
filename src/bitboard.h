@@ -38,7 +38,7 @@ namespace stoat {
         constexpr i32 kSouthEast = -8;
     } // namespace offsets
 
-    class Bitboard {
+    class alignas(16) Bitboard {
     public:
         constexpr Bitboard() = default;
 

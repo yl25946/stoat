@@ -20,10 +20,15 @@
 
 #include <iostream>
 
-#include "core.h"
+#include "position.h"
 
 using namespace stoat;
 
+namespace {} // namespace
+
 i32 main() {
+    const auto pos = Position::startpos();
+    std::cout << pos << std::endl;
+
     return 0;
 }

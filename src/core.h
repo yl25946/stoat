@@ -65,8 +65,8 @@ namespace stoat {
         u8 m_id{};
 
         enum : u8 {
-            kWhiteId = 0,
-            kBlackId,
+            kBlackId = 0,
+            kWhiteId,
             kNoneId,
         };
 
@@ -76,8 +76,8 @@ namespace stoat {
     struct Colors {
         Colors() = delete;
 
-        static constexpr Color kWhite{Color::kWhiteId};
         static constexpr Color kBlack{Color::kBlackId};
+        static constexpr Color kWhite{Color::kWhiteId};
         static constexpr Color kNone{Color::kNoneId};
 
         static constexpr usize kCount = kNone.idx();
