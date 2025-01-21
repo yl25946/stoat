@@ -596,7 +596,7 @@ namespace stoat {
                 return Square{kNoneId};
             }
 
-            if (str[0] < '1' || str[0] > '9' || str[1] < 'a' || str[1] > 'h') {
+            if (str[0] < '1' || str[0] > '9' || str[1] < 'a' || str[1] > 'i') {
                 return Square{kNoneId};
             }
 
