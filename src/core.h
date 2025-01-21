@@ -585,6 +585,12 @@ namespace stoat {
             return Square{id};
         }
 
+        [[nodiscard]] static constexpr Square fromFileRank(i32 file, i32 rank) {
+            assert(rank >= 0 && rank <= 8);
+            assert(file >= 0 && file <= 8);
+            return fromRaw(rank * 9 + file);
+        }
+
         [[nodiscard]] static constexpr Square fromStr(std::string_view str) {
             if (str.length() != 2) {
                 return Square{kNoneId};
@@ -594,8 +600,8 @@ namespace stoat {
                 return Square{kNoneId};
             }
 
-            const u32 file = str[0] - '1';
-            const u32 rank = str[1] - 'a';
+            const u32 file = '1' + 8 - str[0];
+            const u32 rank = 'a' + 8 - str[1];
 
             return fromRaw(rank * 9 + file);
         }
@@ -616,78 +622,87 @@ namespace stoat {
         u8 m_id{};
 
         enum : u8 {
-            k1AId,
-            k2AId,
-            k3AId,
-            k4AId,
-            k5AId,
-            k6AId,
-            k7AId,
-            k8AId,
-            k9AId,
-            k1BId,
-            k2BId,
-            k3BId,
-            k4BId,
-            k5BId,
-            k6BId,
-            k7BId,
-            k8BId,
-            k9BId,
-            k1CId,
-            k2CId,
-            k3CId,
-            k4CId,
-            k5CId,
-            k6CId,
-            k7CId,
-            k8CId,
-            k9CId,
-            k1DId,
-            k2DId,
-            k3DId,
-            k4DId,
-            k5DId,
-            k6DId,
-            k7DId,
-            k8DId,
-            k9DId,
-            k1EId,
-            k2EId,
-            k3EId,
-            k4EId,
-            k5EId,
-            k6EId,
-            k7EId,
-            k8EId,
-            k9EId,
-            k1FId,
-            k2FId,
-            k3FId,
-            k4FId,
-            k5FId,
-            k6FId,
-            k7FId,
-            k8FId,
-            k9FId,
-            k1GId,
-            k2GId,
-            k3GId,
-            k4GId,
-            k5GId,
-            k6GId,
-            k7GId,
-            k8GId,
-            k9GId,
-            k1HId,
-            k2HId,
-            k3HId,
-            k4HId,
-            k5HId,
-            k6HId,
-            k7HId,
-            k8HId,
+            k9IId,
+            k8IId,
+            k7IId,
+            k6IId,
+            k5IId,
+            k4IId,
+            k3IId,
+            k2IId,
+            k1IId,
             k9HId,
+            k8HId,
+            k7HId,
+            k6HId,
+            k5HId,
+            k4HId,
+            k3HId,
+            k2HId,
+            k1HId,
+            k9GId,
+            k8GId,
+            k7GId,
+            k6GId,
+            k5GId,
+            k4GId,
+            k3GId,
+            k2GId,
+            k1GId,
+            k9FId,
+            k8FId,
+            k7FId,
+            k6FId,
+            k5FId,
+            k4FId,
+            k3FId,
+            k2FId,
+            k1FId,
+            k9EId,
+            k8EId,
+            k7EId,
+            k6EId,
+            k5EId,
+            k4EId,
+            k3EId,
+            k2EId,
+            k1EId,
+            k9DId,
+            k8DId,
+            k7DId,
+            k6DId,
+            k5DId,
+            k4DId,
+            k3DId,
+            k2DId,
+            k1DId,
+            k9CId,
+            k8CId,
+            k7CId,
+            k6CId,
+            k5CId,
+            k4CId,
+            k3CId,
+            k2CId,
+            k1CId,
+            k9BId,
+            k8BId,
+            k7BId,
+            k6BId,
+            k5BId,
+            k4BId,
+            k3BId,
+            k2BId,
+            k1BId,
+            k9AId,
+            k8AId,
+            k7AId,
+            k6AId,
+            k5AId,
+            k4AId,
+            k3AId,
+            k2AId,
+            k1AId,
             kNoneId,
         };
 
@@ -699,8 +714,8 @@ namespace stoat {
                 return stream;
             }
 
-            std::cout << static_cast<char>('1' + (square.raw() % 9));
-            std::cout << static_cast<char>('a' + (square.raw() / 9));
+            std::cout << static_cast<char>('1' + 8 - (square.raw() % 9));
+            std::cout << static_cast<char>('a' + 8 - (square.raw() / 9));
 
             return stream;
         }
@@ -709,78 +724,87 @@ namespace stoat {
     struct Squares {
         Squares() = delete;
 
-        static constexpr Square k1A{Square::k1AId};
-        static constexpr Square k2A{Square::k2AId};
-        static constexpr Square k3A{Square::k3AId};
-        static constexpr Square k4A{Square::k4AId};
-        static constexpr Square k5A{Square::k5AId};
-        static constexpr Square k6A{Square::k6AId};
-        static constexpr Square k7A{Square::k7AId};
-        static constexpr Square k8A{Square::k8AId};
-        static constexpr Square k9A{Square::k9AId};
-        static constexpr Square k1B{Square::k1BId};
-        static constexpr Square k2B{Square::k2BId};
-        static constexpr Square k3B{Square::k3BId};
-        static constexpr Square k4B{Square::k4BId};
-        static constexpr Square k5B{Square::k5BId};
-        static constexpr Square k6B{Square::k6BId};
-        static constexpr Square k7B{Square::k7BId};
-        static constexpr Square k8B{Square::k8BId};
-        static constexpr Square k9B{Square::k9BId};
-        static constexpr Square k1C{Square::k1CId};
-        static constexpr Square k2C{Square::k2CId};
-        static constexpr Square k3C{Square::k3CId};
-        static constexpr Square k4C{Square::k4CId};
-        static constexpr Square k5C{Square::k5CId};
-        static constexpr Square k6C{Square::k6CId};
-        static constexpr Square k7C{Square::k7CId};
-        static constexpr Square k8C{Square::k8CId};
-        static constexpr Square k9C{Square::k9CId};
-        static constexpr Square k1D{Square::k1DId};
-        static constexpr Square k2D{Square::k2DId};
-        static constexpr Square k3D{Square::k3DId};
-        static constexpr Square k4D{Square::k4DId};
-        static constexpr Square k5D{Square::k5DId};
-        static constexpr Square k6D{Square::k6DId};
-        static constexpr Square k7D{Square::k7DId};
-        static constexpr Square k8D{Square::k8DId};
-        static constexpr Square k9D{Square::k9DId};
-        static constexpr Square k1E{Square::k1EId};
-        static constexpr Square k2E{Square::k2EId};
-        static constexpr Square k3E{Square::k3EId};
-        static constexpr Square k4E{Square::k4EId};
-        static constexpr Square k5E{Square::k5EId};
-        static constexpr Square k6E{Square::k6EId};
-        static constexpr Square k7E{Square::k7EId};
-        static constexpr Square k8E{Square::k8EId};
-        static constexpr Square k9E{Square::k9EId};
-        static constexpr Square k1F{Square::k1FId};
-        static constexpr Square k2F{Square::k2FId};
-        static constexpr Square k3F{Square::k3FId};
-        static constexpr Square k4F{Square::k4FId};
-        static constexpr Square k5F{Square::k5FId};
-        static constexpr Square k6F{Square::k6FId};
-        static constexpr Square k7F{Square::k7FId};
-        static constexpr Square k8F{Square::k8FId};
-        static constexpr Square k9F{Square::k9FId};
-        static constexpr Square k1G{Square::k1GId};
-        static constexpr Square k2G{Square::k2GId};
-        static constexpr Square k3G{Square::k3GId};
-        static constexpr Square k4G{Square::k4GId};
-        static constexpr Square k5G{Square::k5GId};
-        static constexpr Square k6G{Square::k6GId};
-        static constexpr Square k7G{Square::k7GId};
-        static constexpr Square k8G{Square::k8GId};
-        static constexpr Square k9G{Square::k9GId};
-        static constexpr Square k1H{Square::k1HId};
-        static constexpr Square k2H{Square::k2HId};
-        static constexpr Square k3H{Square::k3HId};
-        static constexpr Square k4H{Square::k4HId};
-        static constexpr Square k5H{Square::k5HId};
-        static constexpr Square k6H{Square::k6HId};
-        static constexpr Square k7H{Square::k7HId};
-        static constexpr Square k8H{Square::k8HId};
+        static constexpr Square k9I{Square::k9IId};
+        static constexpr Square k8I{Square::k8IId};
+        static constexpr Square k7I{Square::k7IId};
+        static constexpr Square k6I{Square::k6IId};
+        static constexpr Square k5I{Square::k5IId};
+        static constexpr Square k4I{Square::k4IId};
+        static constexpr Square k3I{Square::k3IId};
+        static constexpr Square k2I{Square::k2IId};
+        static constexpr Square k1I{Square::k1IId};
         static constexpr Square k9H{Square::k9HId};
+        static constexpr Square k8H{Square::k8HId};
+        static constexpr Square k7H{Square::k7HId};
+        static constexpr Square k6H{Square::k6HId};
+        static constexpr Square k5H{Square::k5HId};
+        static constexpr Square k4H{Square::k4HId};
+        static constexpr Square k3H{Square::k3HId};
+        static constexpr Square k2H{Square::k2HId};
+        static constexpr Square k1H{Square::k1HId};
+        static constexpr Square k9G{Square::k9GId};
+        static constexpr Square k8G{Square::k8GId};
+        static constexpr Square k7G{Square::k7GId};
+        static constexpr Square k6G{Square::k6GId};
+        static constexpr Square k5G{Square::k5GId};
+        static constexpr Square k4G{Square::k4GId};
+        static constexpr Square k3G{Square::k3GId};
+        static constexpr Square k2G{Square::k2GId};
+        static constexpr Square k1G{Square::k1GId};
+        static constexpr Square k9F{Square::k9FId};
+        static constexpr Square k8F{Square::k8FId};
+        static constexpr Square k7F{Square::k7FId};
+        static constexpr Square k6F{Square::k6FId};
+        static constexpr Square k5F{Square::k5FId};
+        static constexpr Square k4F{Square::k4FId};
+        static constexpr Square k3F{Square::k3FId};
+        static constexpr Square k2F{Square::k2FId};
+        static constexpr Square k1F{Square::k1FId};
+        static constexpr Square k9E{Square::k9EId};
+        static constexpr Square k8E{Square::k8EId};
+        static constexpr Square k7E{Square::k7EId};
+        static constexpr Square k6E{Square::k6EId};
+        static constexpr Square k5E{Square::k5EId};
+        static constexpr Square k4E{Square::k4EId};
+        static constexpr Square k3E{Square::k3EId};
+        static constexpr Square k2E{Square::k2EId};
+        static constexpr Square k1E{Square::k1EId};
+        static constexpr Square k9D{Square::k9DId};
+        static constexpr Square k8D{Square::k8DId};
+        static constexpr Square k7D{Square::k7DId};
+        static constexpr Square k6D{Square::k6DId};
+        static constexpr Square k5D{Square::k5DId};
+        static constexpr Square k4D{Square::k4DId};
+        static constexpr Square k3D{Square::k3DId};
+        static constexpr Square k2D{Square::k2DId};
+        static constexpr Square k1D{Square::k1DId};
+        static constexpr Square k9C{Square::k9CId};
+        static constexpr Square k8C{Square::k8CId};
+        static constexpr Square k7C{Square::k7CId};
+        static constexpr Square k6C{Square::k6CId};
+        static constexpr Square k5C{Square::k5CId};
+        static constexpr Square k4C{Square::k4CId};
+        static constexpr Square k3C{Square::k3CId};
+        static constexpr Square k2C{Square::k2CId};
+        static constexpr Square k1C{Square::k1CId};
+        static constexpr Square k9B{Square::k9BId};
+        static constexpr Square k8B{Square::k8BId};
+        static constexpr Square k7B{Square::k7BId};
+        static constexpr Square k6B{Square::k6BId};
+        static constexpr Square k5B{Square::k5BId};
+        static constexpr Square k4B{Square::k4BId};
+        static constexpr Square k3B{Square::k3BId};
+        static constexpr Square k2B{Square::k2BId};
+        static constexpr Square k1B{Square::k1BId};
+        static constexpr Square k9A{Square::k9AId};
+        static constexpr Square k8A{Square::k8AId};
+        static constexpr Square k7A{Square::k7AId};
+        static constexpr Square k6A{Square::k6AId};
+        static constexpr Square k5A{Square::k5AId};
+        static constexpr Square k4A{Square::k4AId};
+        static constexpr Square k3A{Square::k3AId};
+        static constexpr Square k2A{Square::k2AId};
+        static constexpr Square k1A{Square::k1AId};
         static constexpr Square kNone{Square::kNoneId};
 
         static constexpr usize kCount = kNone.idx();
