@@ -16,9 +16,11 @@
  * along with Stoat. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "types.h"
+
 #include <iostream>
 
-#include "types.h"
+#include "core.h"
 
 using namespace stoat;
 

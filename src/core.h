@@ -100,11 +100,67 @@ namespace stoat {
             return static_cast<usize>(m_id);
         }
 
+        [[nodiscard]] constexpr bool isPromoted() const {
+            assert(m_id <= kNoneId);
+            return m_id == kPromotedPawnId || m_id == kPromotedLanceId || m_id == kPromotedKnightId
+                || m_id == kPromotedSilverId || m_id == kPromotedBishopId || m_id == kPromotedRookId;
+        }
+
         [[nodiscard]] constexpr Piece withColor(Color c) const;
+
+        [[nodiscard]] constexpr PieceType promoted() const {
+            switch (m_id) {
+                case kPawnId:
+                    return PieceType{kPromotedPawnId};
+                case kLanceId:
+                    return PieceType{kPromotedLanceId};
+                case kKnightId:
+                    return PieceType{kPromotedKnightId};
+                case kSilverId:
+                    return PieceType{kPromotedSilverId};
+                case kBishopId:
+                    return PieceType{kPromotedBishopId};
+                case kRookId:
+                    return PieceType{kPromotedRookId};
+                default:
+                    return PieceType{kNoneId};
+            }
+        }
 
         [[nodiscard]] static constexpr PieceType fromRaw(u8 id) {
             assert(id <= kNoneId);
             return PieceType{id};
+        }
+
+        [[nodiscard]] static constexpr PieceType unpromotedFromChar(char c) {
+            switch (c) {
+                case 'P':
+                case 'p':
+                    return PieceType{kPawnId};
+                case 'L':
+                case 'l':
+                    return PieceType{kLanceId};
+                case 'N':
+                case 'n':
+                    return PieceType{kKnightId};
+                case 'S':
+                case 's':
+                    return PieceType{kSilverId};
+                case 'G':
+                case 'g':
+                    return PieceType{kGoldId};
+                case 'B':
+                case 'b':
+                    return PieceType{kBishopId};
+                case 'R':
+                case 'r':
+                    return PieceType{kRookId};
+                case 'K':
+                case 'k':
+                    return PieceType{kKingId};
+                default:
+                    return PieceType{kNoneId};
+            }
         }
 
         [[nodiscard]] constexpr explicit operator bool() const {
@@ -242,17 +298,69 @@ namespace stoat {
             return Color::fromRaw(m_id & 0b1);
         }
 
+        [[nodiscard]] constexpr Piece promoted() const {
+            return type().promoted().withColor(color());
+        }
+
         [[nodiscard]] static constexpr Piece fromRaw(u8 id) {
             assert(id <= kNoneId);
             return Piece{id};
         }
 
+        [[nodiscard]] static constexpr Piece unpromotedFromChar(char c) {
+            switch (c) {
+                case 'P':
+                    return Piece{kBlackPawnId};
+                case 'p':
+                    return Piece{kWhitePawnId};
+                case 'L':
+                    return Piece{kBlackLanceId};
+                case 'l':
+                    return Piece{kWhiteLanceId};
+                case 'N':
+                    return Piece{kBlackKnightId};
+                case 'n':
+                    return Piece{kWhiteKnightId};
+                case 'S':
+                    return Piece{kBlackSilverId};
+                case 's':
+                    return Piece{kWhiteSilverId};
+                case 'G':
+                    return Piece{kBlackGoldId};
+                case 'g':
+                    return Piece{kWhiteGoldId};
+                case 'B':
+                    return Piece{kBlackBishopId};
+                case 'b':
+                    return Piece{kWhiteBishopId};
+                case 'R':
+                    return Piece{kBlackRookId};
+                case 'r':
+                    return Piece{kWhiteRookId};
+                case 'K':
+                    return Piece{kBlackKingId};
+                case 'k':
+                    return Piece{kWhiteKingId};
+                default:
+                    return Piece{kNoneId};
+            }
+        }
+
         [[nodiscard]] static constexpr Piece fromStr(std::string_view str) {
-            if (str.length() != 2) {
+            if (str.empty()) {
                 return Piece{kNoneId};
             }
 
-            return Piece{kNoneId};
+            if (str.length() == 2 && str[0] == ' ') {
+                str = str.substr(1);
+            }
+
+            if (str.length() != 1 && str.length() != 2 || str.length() == 2 && str[0] != '+') {
+                return Piece{kNoneId};
+            }
+
+            const auto piece = unpromotedFromChar(str.back());
+            return str.length() == 2 ? piece.promoted() : piece;
         }
 
         [[nodiscard]] constexpr explicit operator bool() const {
@@ -438,6 +546,242 @@ namespace stoat {
         static constexpr Piece kBlackKing{Piece::kBlackKingId};
         static constexpr Piece kWhiteKing{Piece::kWhiteKingId};
         static constexpr Piece kNone{Piece::kNoneId};
+
+        static constexpr usize kCount = kNone.idx();
+    };
+
+    class Square {
+    public:
+        constexpr Square() = default;
+
+        constexpr Square(const Square&) = default;
+        constexpr Square(Square&&) = default;
+
+        [[nodiscard]] constexpr u8 raw() const {
+            return m_id;
+        }
+
+        [[nodiscard]] constexpr usize idx() const {
+            return static_cast<usize>(m_id);
+        }
+
+        [[nodiscard]] constexpr u128 bit() const {
+            assert(m_id != kNoneId);
+            return u128{1} << m_id;
+        }
+
+        [[nodiscard]] constexpr Square offset(i32 offset) const {
+            assert(m_id + offset >= 0);
+            assert(m_id + offset < kNoneId);
+            return fromRaw(m_id + offset);
+        }
+
+        [[nodiscard]] constexpr Square rotate() const {
+            return fromRaw(kNoneId - m_id - 1);
+        }
+
+        [[nodiscard]] static constexpr Square fromRaw(u8 id) {
+            assert(id <= kNoneId);
+            return Square{id};
+        }
+
+        [[nodiscard]] static constexpr Square fromStr(std::string_view str) {
+            if (str.length() != 2) {
+                return Square{kNoneId};
+            }
+
+            if (str[0] < '1' || str[0] > '9' || str[1] < 'a' || str[1] > 'h') {
+                return Square{kNoneId};
+            }
+
+            const u32 file = str[0] - '1';
+            const u32 rank = str[1] - 'a';
+
+            return fromRaw(rank * 9 + file);
+        }
+
+        [[nodiscard]] constexpr explicit operator bool() const {
+            return m_id != kNoneId;
+        }
+
+        [[nodiscard]] constexpr bool operator==(const Square&) const = default;
+
+        constexpr Square& operator=(const Square&) = default;
+        constexpr Square& operator=(Square&&) = default;
+
+    private:
+        explicit constexpr Square(u8 id) :
+                m_id{id} {}
+
+        u8 m_id{};
+
+        enum : u8 {
+            k1AId,
+            k2AId,
+            k3AId,
+            k4AId,
+            k5AId,
+            k6AId,
+            k7AId,
+            k8AId,
+            k9AId,
+            k1BId,
+            k2BId,
+            k3BId,
+            k4BId,
+            k5BId,
+            k6BId,
+            k7BId,
+            k8BId,
+            k9BId,
+            k1CId,
+            k2CId,
+            k3CId,
+            k4CId,
+            k5CId,
+            k6CId,
+            k7CId,
+            k8CId,
+            k9CId,
+            k1DId,
+            k2DId,
+            k3DId,
+            k4DId,
+            k5DId,
+            k6DId,
+            k7DId,
+            k8DId,
+            k9DId,
+            k1EId,
+            k2EId,
+            k3EId,
+            k4EId,
+            k5EId,
+            k6EId,
+            k7EId,
+            k8EId,
+            k9EId,
+            k1FId,
+            k2FId,
+            k3FId,
+            k4FId,
+            k5FId,
+            k6FId,
+            k7FId,
+            k8FId,
+            k9FId,
+            k1GId,
+            k2GId,
+            k3GId,
+            k4GId,
+            k5GId,
+            k6GId,
+            k7GId,
+            k8GId,
+            k9GId,
+            k1HId,
+            k2HId,
+            k3HId,
+            k4HId,
+            k5HId,
+            k6HId,
+            k7HId,
+            k8HId,
+            k9HId,
+            kNoneId,
+        };
+
+        friend struct Squares;
+
+        friend inline std::ostream& operator<<(std::ostream& stream, Square square) {
+            if (square.raw() == kNoneId) {
+                stream << "??";
+                return stream;
+            }
+
+            std::cout << static_cast<char>('1' + (square.raw() % 9));
+            std::cout << static_cast<char>('a' + (square.raw() / 9));
+
+            return stream;
+        }
+    };
+
+    struct Squares {
+        Squares() = delete;
+
+        static constexpr Square k1A{Square::k1AId};
+        static constexpr Square k2A{Square::k2AId};
+        static constexpr Square k3A{Square::k3AId};
+        static constexpr Square k4A{Square::k4AId};
+        static constexpr Square k5A{Square::k5AId};
+        static constexpr Square k6A{Square::k6AId};
+        static constexpr Square k7A{Square::k7AId};
+        static constexpr Square k8A{Square::k8AId};
+        static constexpr Square k9A{Square::k9AId};
+        static constexpr Square k1B{Square::k1BId};
+        static constexpr Square k2B{Square::k2BId};
+        static constexpr Square k3B{Square::k3BId};
+        static constexpr Square k4B{Square::k4BId};
+        static constexpr Square k5B{Square::k5BId};
+        static constexpr Square k6B{Square::k6BId};
+        static constexpr Square k7B{Square::k7BId};
+        static constexpr Square k8B{Square::k8BId};
+        static constexpr Square k9B{Square::k9BId};
+        static constexpr Square k1C{Square::k1CId};
+        static constexpr Square k2C{Square::k2CId};
+        static constexpr Square k3C{Square::k3CId};
+        static constexpr Square k4C{Square::k4CId};
+        static constexpr Square k5C{Square::k5CId};
+        static constexpr Square k6C{Square::k6CId};
+        static constexpr Square k7C{Square::k7CId};
+        static constexpr Square k8C{Square::k8CId};
+        static constexpr Square k9C{Square::k9CId};
+        static constexpr Square k1D{Square::k1DId};
+        static constexpr Square k2D{Square::k2DId};
+        static constexpr Square k3D{Square::k3DId};
+        static constexpr Square k4D{Square::k4DId};
+        static constexpr Square k5D{Square::k5DId};
+        static constexpr Square k6D{Square::k6DId};
+        static constexpr Square k7D{Square::k7DId};
+        static constexpr Square k8D{Square::k8DId};
+        static constexpr Square k9D{Square::k9DId};
+        static constexpr Square k1E{Square::k1EId};
+        static constexpr Square k2E{Square::k2EId};
+        static constexpr Square k3E{Square::k3EId};
+        static constexpr Square k4E{Square::k4EId};
+        static constexpr Square k5E{Square::k5EId};
+        static constexpr Square k6E{Square::k6EId};
+        static constexpr Square k7E{Square::k7EId};
+        static constexpr Square k8E{Square::k8EId};
+        static constexpr Square k9E{Square::k9EId};
+        static constexpr Square k1F{Square::k1FId};
+        static constexpr Square k2F{Square::k2FId};
+        static constexpr Square k3F{Square::k3FId};
+        static constexpr Square k4F{Square::k4FId};
+        static constexpr Square k5F{Square::k5FId};
+        static constexpr Square k6F{Square::k6FId};
+        static constexpr Square k7F{Square::k7FId};
+        static constexpr Square k8F{Square::k8FId};
+        static constexpr Square k9F{Square::k9FId};
+        static constexpr Square k1G{Square::k1GId};
+        static constexpr Square k2G{Square::k2GId};
+        static constexpr Square k3G{Square::k3GId};
+        static constexpr Square k4G{Square::k4GId};
+        static constexpr Square k5G{Square::k5GId};
+        static constexpr Square k6G{Square::k6GId};
+        static constexpr Square k7G{Square::k7GId};
+        static constexpr Square k8G{Square::k8GId};
+        static constexpr Square k9G{Square::k9GId};
+        static constexpr Square k1H{Square::k1HId};
+        static constexpr Square k2H{Square::k2HId};
+        static constexpr Square k3H{Square::k3HId};
+        static constexpr Square k4H{Square::k4HId};
+        static constexpr Square k5H{Square::k5HId};
+        static constexpr Square k6H{Square::k6HId};
+        static constexpr Square k7H{Square::k7HId};
+        static constexpr Square k8H{Square::k8HId};
+        static constexpr Square k9H{Square::k9HId};
+        static constexpr Square kNone{Square::kNoneId};
 
         static constexpr usize kCount = kNone.idx();
     };
