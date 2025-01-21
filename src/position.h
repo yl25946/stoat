@@ -22,18 +22,25 @@
 
 #include <array>
 #include <iostream>
+#include <string>
 
 #include "bitboard.h"
 
 namespace stoat {
     class Hand {
     public:
+        [[nodiscard]] inline bool empty() const {
+            return m_hand == 0;
+        }
+
         [[nodiscard]] u32 count(PieceType pt) const;
 
         void increment(PieceType pt);
         void decrement(PieceType pt);
 
         void set(PieceType pt, u32 count);
+
+        [[nodiscard]] std::string sfen(bool uppercase) const;
 
     private:
         u32 m_hand{};
@@ -84,6 +91,8 @@ namespace stoat {
         [[nodiscard]] inline u32 moveCount() const {
             return m_moveCount;
         }
+
+        [[nodiscard]] std::string sfen() const;
 
         [[nodiscard]] bool operator==(const Position&) const = default;
 

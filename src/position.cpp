@@ -18,6 +18,8 @@
 
 #include "position.h"
 
+#include <sstream>
+
 namespace stoat {
     namespace {
         constexpr i32 PawnHandBits = 5;
@@ -105,12 +107,51 @@ namespace stoat {
         m_hand = (m_hand & ~mask) | (count << offset);
     }
 
+    std::string Hand::sfen(bool uppercase) const {
+        std::ostringstream sfen{};
+
+        const auto print = [&](PieceType pt) {
+            const auto count = this->count(pt);
+
+            if (count == 0) {
+                return;
+            }
+
+            if (count > 1) {
+                sfen << count;
+            }
+
+            const auto c = pt.str()[0];
+            assert(c != '+' && c != '?');
+
+            sfen << (uppercase ? static_cast<char>(std::toupper(c)) : c);
+        };
+
+        print(PieceTypes::kRook);
+        print(PieceTypes::kBishop);
+        print(PieceTypes::kGold);
+        print(PieceTypes::kSilver);
+        print(PieceTypes::kKnight);
+        print(PieceTypes::kLance);
+        print(PieceTypes::kPawn);
+
+        return sfen.str();
+    }
+
     std::ostream& operator<<(std::ostream& stream, const Hand& hand) {
-        const auto print = [&stream, &hand](PieceType pt) {
+        bool first = true;
+
+        const auto print = [&](PieceType pt) {
             const auto count = hand.count(pt);
 
             if (count == 0) {
                 return;
+            }
+
+            if (!first) {
+                stream << ' ';
+            } else {
+                first = false;
             }
 
             if (count > 1) {
@@ -148,6 +189,47 @@ namespace stoat {
                 m_mailbox[sq.idx()] = piece;
             }
         }
+    }
+
+    std::string Position::sfen() const {
+        std::ostringstream sfen{};
+
+        for (i32 rank = 8; rank >= 0; --rank) {
+            for (i32 file = 0; file < 9; ++file) {
+                if (const auto piece = pieceOn(Square::fromFileRank(file, rank)); piece == Pieces::kNone) {
+                    u32 emptySquares = 1;
+                    for (; file < 8 && pieceOn(Square::fromFileRank(file + 1, rank)) == Pieces::kNone;
+                         ++file, ++emptySquares)
+                    {}
+
+                    sfen << emptySquares;
+                } else {
+                    sfen << piece;
+                }
+            }
+
+            if (rank > 0) {
+                sfen << '/';
+            }
+        }
+
+        sfen << (stm() == Colors::kBlack ? " b " : " w ");
+
+        const auto& blackHand = hand(Colors::kBlack);
+        const auto& whiteHand = hand(Colors::kWhite);
+
+        if (blackHand.empty() && whiteHand.empty()) {
+            sfen << '-';
+        } else {
+            sfen << blackHand.sfen(true);
+            sfen << whiteHand.sfen(false);
+        }
+
+        sfen << ' ';
+
+        sfen << moveCount();
+
+        return sfen.str();
     }
 
     Position Position::startpos() {

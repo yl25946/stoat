@@ -30,5 +30,7 @@ i32 main() {
     const auto pos = Position::startpos();
     std::cout << pos << std::endl;
 
+    std::cout << "\nSFEN: " << pos.sfen() << std::endl;
+
     return 0;
 }

@@ -146,6 +146,41 @@ namespace stoat {
             }
         }
 
+        [[nodiscard]] constexpr std::string_view str() const {
+            switch (m_id) {
+                case kPawnId:
+                    return "P";
+                case kPromotedPawnId:
+                    return "+P";
+                case kLanceId:
+                    return "L";
+                case kKnightId:
+                    return "N";
+                case kPromotedLanceId:
+                    return "+L";
+                case kPromotedKnightId:
+                    return "+N";
+                case kSilverId:
+                    return "S";
+                case kPromotedSilverId:
+                    return "+S";
+                case kGoldId:
+                    return "G";
+                case kBishopId:
+                    return "B";
+                case kRookId:
+                    return "R";
+                case kPromotedBishopId:
+                    return "+B";
+                case kPromotedRookId:
+                    return "+R";
+                case kKingId:
+                    return "K";
+                default:
+                    return "?";
+            }
+        }
+
         [[nodiscard]] static constexpr PieceType fromRaw(u8 id) {
             assert(id <= kNoneId);
             return PieceType{id};
@@ -218,54 +253,7 @@ namespace stoat {
         friend struct PieceTypes;
 
         friend inline std::ostream& operator<<(std::ostream& stream, PieceType pt) {
-            switch (pt.raw()) {
-                case kPawnId:
-                    stream << "P";
-                    break;
-                case kPromotedPawnId:
-                    stream << "+P";
-                    break;
-                case kLanceId:
-                    stream << "L";
-                    break;
-                case kKnightId:
-                    stream << "N";
-                    break;
-                case kPromotedLanceId:
-                    stream << "+L";
-                    break;
-                case kPromotedKnightId:
-                    stream << "+N";
-                    break;
-                case kSilverId:
-                    stream << "S";
-                    break;
-                case kPromotedSilverId:
-                    stream << "+S";
-                    break;
-                case kGoldId:
-                    stream << "G";
-                    break;
-                case kBishopId:
-                    stream << "B";
-                    break;
-                case kRookId:
-                    stream << "R";
-                    break;
-                case kPromotedBishopId:
-                    stream << "+B";
-                    break;
-                case kPromotedRookId:
-                    stream << "+R";
-                    break;
-                case kKingId:
-                    stream << "K";
-                    break;
-                default:
-                    stream << "?";
-                    break;
-            }
-
+            stream << pt.str();
             return stream;
         }
     };
@@ -319,6 +307,69 @@ namespace stoat {
 
         [[nodiscard]] constexpr Piece promoted() const {
             return type().promoted().withColor(color());
+        }
+
+        [[nodiscard]] constexpr std::string_view str() const {
+            switch (m_id) {
+                case kBlackPawnId:
+                    return "P";
+                case kWhitePawnId:
+                    return "p";
+                case kBlackPromotedPawnId:
+                    return "+P";
+                case kWhitePromotedPawnId:
+                    return "+p";
+                case kBlackLanceId:
+                    return "L";
+                case kWhiteLanceId:
+                    return "l";
+                case kBlackKnightId:
+                    return "N";
+                case kWhiteKnightId:
+                    return "n";
+                case kBlackPromotedLanceId:
+                    return "+L";
+                case kWhitePromotedLanceId:
+                    return "+l";
+                case kBlackPromotedKnightId:
+                    return "+N";
+                case kWhitePromotedKnightId:
+                    return "+n";
+                case kBlackSilverId:
+                    return "S";
+                case kWhiteSilverId:
+                    return "s";
+                case kBlackPromotedSilverId:
+                    return "+S";
+                case kWhitePromotedSilverId:
+                    return "+s";
+                case kBlackGoldId:
+                    return "G";
+                case kWhiteGoldId:
+                    return "g";
+                case kBlackBishopId:
+                    return "B";
+                case kWhiteBishopId:
+                    return "b";
+                case kBlackRookId:
+                    return "R";
+                case kWhiteRookId:
+                    return "r";
+                case kBlackPromotedBishopId:
+                    return "+B";
+                case kWhitePromotedBishopId:
+                    return "+b";
+                case kBlackPromotedRookId:
+                    return "+R";
+                case kWhitePromotedRookId:
+                    return "+r";
+                case kBlackKingId:
+                    return "K";
+                case kWhiteKingId:
+                    return "k";
+                default:
+                    return "?";
+            }
         }
 
         [[nodiscard]] static constexpr Piece fromRaw(u8 id) {
@@ -432,96 +483,7 @@ namespace stoat {
         friend struct Pieces;
 
         friend inline std::ostream& operator<<(std::ostream& stream, Piece piece) {
-            switch (piece.raw()) {
-                case kBlackPawnId:
-                    stream << "P";
-                    break;
-                case kWhitePawnId:
-                    stream << "p";
-                    break;
-                case kBlackPromotedPawnId:
-                    stream << "+P";
-                    break;
-                case kWhitePromotedPawnId:
-                    stream << "+p";
-                    break;
-                case kBlackLanceId:
-                    stream << "L";
-                    break;
-                case kWhiteLanceId:
-                    stream << "l";
-                    break;
-                case kBlackKnightId:
-                    stream << "N";
-                    break;
-                case kWhiteKnightId:
-                    stream << "n";
-                    break;
-                case kBlackPromotedLanceId:
-                    stream << "+L";
-                    break;
-                case kWhitePromotedLanceId:
-                    stream << "+l";
-                    break;
-                case kBlackPromotedKnightId:
-                    stream << "+N";
-                    break;
-                case kWhitePromotedKnightId:
-                    stream << "+n";
-                    break;
-                case kBlackSilverId:
-                    stream << "S";
-                    break;
-                case kWhiteSilverId:
-                    stream << "s";
-                    break;
-                case kBlackPromotedSilverId:
-                    stream << "+S";
-                    break;
-                case kWhitePromotedSilverId:
-                    stream << "+s";
-                    break;
-                case kBlackGoldId:
-                    stream << "G";
-                    break;
-                case kWhiteGoldId:
-                    stream << "g";
-                    break;
-                case kBlackBishopId:
-                    stream << "B";
-                    break;
-                case kWhiteBishopId:
-                    stream << "b";
-                    break;
-                case kBlackRookId:
-                    stream << "R";
-                    break;
-                case kWhiteRookId:
-                    stream << "r";
-                    break;
-                case kBlackPromotedBishopId:
-                    stream << "+B";
-                    break;
-                case kWhitePromotedBishopId:
-                    stream << "+b";
-                    break;
-                case kBlackPromotedRookId:
-                    stream << "+R";
-                    break;
-                case kWhitePromotedRookId:
-                    stream << "+r";
-                    break;
-                case kBlackKingId:
-                    stream << "K";
-                    break;
-                case kWhiteKingId:
-                    stream << "k";
-                    break;
-                default:
-                    stream << "?";
-                    break;
-            }
-
+            stream << piece.str();
             return stream;
         }
     };
