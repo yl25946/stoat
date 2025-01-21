@@ -22,9 +22,12 @@
 
 #include <array>
 #include <iostream>
+#include <span>
 #include <string>
+#include <string_view>
 
 #include "bitboard.h"
+#include "util/result.h"
 
 namespace stoat {
     class Hand {
@@ -42,10 +45,25 @@ namespace stoat {
 
         [[nodiscard]] std::string sfen(bool uppercase) const;
 
+        [[nodiscard]] bool operator==(const Hand&) const = default;
+
     private:
         u32 m_hand{};
 
         friend std::ostream& operator<<(std::ostream& stream, const Hand& hand);
+    };
+
+    class SfenError {
+    public:
+        explicit SfenError(std::string message) :
+                m_message{std::move(message)} {}
+
+        [[nodiscard]] std::string_view message() const {
+            return m_message;
+        }
+
+    private:
+        std::string m_message{};
     };
 
     class Position {
@@ -101,6 +119,9 @@ namespace stoat {
 
         [[nodiscard]] static Position startpos();
 
+        [[nodiscard]] static util::Result<Position, SfenError> fromSfenParts(std::span<std::string_view> sfen);
+        [[nodiscard]] static util::Result<Position, SfenError> fromSfen(std::string_view sfen);
+
         friend std::ostream& operator<<(std::ostream& stream, const Position& pos);
 
     private:
@@ -114,6 +135,8 @@ namespace stoat {
         Color m_stm{Colors::kBlack};
 
         u16 m_moveCount{1};
+
+        void addPiece(Square square, Piece piece);
 
         void regen();
     };

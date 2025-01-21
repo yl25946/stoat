@@ -20,6 +20,9 @@
 
 #include <sstream>
 
+#include "util/parse.h"
+#include "util/split.h"
+
 namespace stoat {
     namespace {
         constexpr i32 PawnHandBits = 5;
@@ -124,7 +127,7 @@ namespace stoat {
             const auto c = pt.str()[0];
             assert(c != '+' && c != '?');
 
-            sfen << (uppercase ? static_cast<char>(std::toupper(c)) : c);
+            sfen << (uppercase ? c : static_cast<char>(std::tolower(c)));
         };
 
         print(PieceTypes::kRook);
@@ -174,6 +177,15 @@ namespace stoat {
 
     Position::Position() {
         m_mailbox.fill(Pieces::kNone);
+    }
+
+    void Position::addPiece(Square square, Piece piece) {
+        assert(!pieceOn(square));
+
+        m_colors[piece.color().idx()] |= square.bit();
+        m_pieces[piece.type().idx()] |= square.bit();
+
+        m_mailbox[square.idx()] = piece;
     }
 
     void Position::regen() {
@@ -251,6 +263,118 @@ namespace stoat {
         pos.regen();
 
         return pos;
+    }
+
+    util::Result<Position, SfenError> Position::fromSfenParts(std::span<std::string_view> sfen) {
+        if (sfen.size() < 3 || sfen.size() > 4) {
+            return util::err<SfenError>("wrong number of SFEN parts");
+        }
+
+        Position pos{};
+
+        std::vector<std::string_view> ranks{};
+        ranks.reserve(9);
+
+        util::split(ranks, sfen[0], '/');
+
+        if (ranks.size() != 9) {
+            return util::err<SfenError>("wrong number of ranks in SFEN");
+        }
+
+        for (i32 rankIdx = 0; rankIdx < ranks.size(); ++rankIdx) {
+            const auto rank = ranks[rankIdx];
+
+            i32 fileIdx = 0;
+
+            for (i32 curr = 0; curr < rank.size(); ++curr) {
+                const auto c = rank[curr];
+                if (const auto emptySquares = util::tryParseDigit<i32>(c)) {
+                    fileIdx += *emptySquares;
+                } else if (c == '+') {
+                    if (curr == rank.size() - 1) {
+                        return util::err<SfenError>("+ found at end of rank with no matching piece");
+                    }
+
+                    const auto pieceStr = rank.substr(curr, 2);
+
+                    if (const auto piece = Piece::fromStr(pieceStr)) {
+                        pos.addPiece(Square::fromFileRank(fileIdx, 8 - rankIdx), piece);
+                        ++fileIdx;
+                        ++curr;
+                    } else {
+                        return util::err<SfenError>("invalid promoted piece " + std::string{pieceStr});
+                    }
+                } else if (const auto piece = Piece::fromStr(rank.substr(curr, 1))) {
+                    pos.addPiece(Square::fromFileRank(fileIdx, 8 - rankIdx), piece);
+                    ++fileIdx;
+                } else {
+                    return util::err<SfenError>("invalid piece char " + std::string{c});
+                }
+            }
+
+            if (fileIdx != 9) {
+                return util::err<SfenError>("wrong number of files in rank");
+            }
+        }
+
+        if (const auto blackKingCount = pos.pieceBb(Pieces::kBlackKing).popcount(); blackKingCount != 1) {
+            return util::err<SfenError>("black must have exactly 1 king");
+        }
+
+        if (const auto whiteKingCount = pos.pieceBb(Pieces::kWhiteKing).popcount(); whiteKingCount != 1) {
+            return util::err<SfenError>("white must have exactly 1 king");
+        }
+
+        const auto stm = sfen[1];
+
+        if (stm.size() != 1 || (stm[0] != 'b' && stm[0] != 'w')) {
+            return util::err<SfenError>("invalid side to move");
+        }
+
+        pos.m_stm = stm[0] == 'b' ? Colors::kBlack : Colors::kWhite;
+
+        //TODO ensure opponent is not in check
+
+        const auto hand = sfen[2];
+
+        if (hand != "-") {
+            u32 nextCount = 1;
+
+            for (i32 curr = 0; curr < hand.size(); ++curr) {
+                const auto c = hand[curr];
+                if (std::isdigit(c)) {
+                    if (curr == hand.size() - 1) {
+                        return util::err<SfenError>("digit found at end of hand with no matching piece");
+                    }
+
+                    nextCount = *util::tryParseDigit(c);
+
+                    if (nextCount == 0) {
+                        return util::err<SfenError>("0 found in hand");
+                    }
+                } else if (const auto piece = Piece::unpromotedFromChar(hand[curr])) {
+                    pos.m_hands[piece.color().idx()].set(piece.type(), nextCount);
+                    nextCount = 1;
+                } else {
+                    return util::err<SfenError>("invalid piece " + std::string{c} + " found in hand");
+                }
+            }
+        }
+
+        if (sfen.size() == 4 && !util::tryParse(pos.m_moveCount, sfen[3])) {
+            return util::err<SfenError>("invalid move count " + std::string{sfen[3]});
+        }
+
+        return util::ok(pos);
+    }
+
+    util::Result<Position, SfenError> Position::fromSfen(std::string_view sfen) {
+        std::vector<std::string_view> parts{};
+        parts.reserve(4);
+
+        util::split(parts, sfen);
+
+        return fromSfenParts(parts);
     }
 
     std::ostream& operator<<(std::ostream& stream, const Position& pos) {

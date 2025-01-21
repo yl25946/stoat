@@ -16,31 +16,13 @@
  * along with Stoat. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "types.h"
+#pragma once
 
-#include <iostream>
+#include "../types.h"
 
-#include "position.h"
-#include "util/split.h"
+#include <string_view>
+#include <vector>
 
-using namespace stoat;
-
-namespace {} // namespace
-
-i32 main() {
-    static constexpr std::string_view Sfen =
-        "8l/1l+R2P3/p2pBG1pp/kps1p4/Nn1P2G2/P1P1P2PP/1PS6/1KSG3+r1/LN2+p3L w Sbgn3p 124";
-
-    std::cout << "Parsing SFEN: " << Sfen << "\n\n";
-
-    auto parsed = Position::fromSfen(Sfen);
-
-    if (parsed) {
-        const auto pos = parsed.take();
-        std::cout << pos << "\n\nSFEN: " << pos.sfen() << std::endl;
-    } else {
-        std::cerr << "failed to parse SFEN: " << parsed.takeErr().message() << std::endl;
-    }
-
-    return 0;
+namespace stoat::util {
+    void split(std::vector<std::string_view>& dst, std::string_view str, char delim = ' ');
 }
