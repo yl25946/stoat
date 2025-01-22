@@ -16,37 +16,10 @@
  * along with Stoat. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "types.h"
-
-#include <iostream>
-
-#include "position.h"
-#include "util/split.h"
+#include "usi.h"
 
 using namespace stoat;
 
-namespace {} // namespace
-
 i32 main() {
-    static constexpr std::string_view Sfen =
-        "8l/1l+R2P3/p2pBG1pp/kps1p4/Nn1P2G2/P1P1P2PP/1PS6/1KSG3+r1/LN2+p3L w Sbgn3p 124";
-
-    std::cout << "Parsing SFEN: " << Sfen << "\n\n";
-
-    auto parsed = Position::fromSfen(Sfen);
-
-    if (parsed) {
-        const auto pos = parsed.take();
-        std::cout << pos << "\n\nSFEN: " << pos.sfen() << std::endl;
-    } else {
-        std::cerr << "failed to parse SFEN: " << parsed.takeErr().message() << std::endl;
-    }
-
-    std::cout << std::endl;
-
-    std::cout << Move::makeNormal(Squares::k7G, Squares::k7F) << std::endl;
-    std::cout << Move::makePromotion(Squares::k4E, Squares::k3C) << std::endl;
-    std::cout << Move::makeDrop(PieceTypes::kPawn, Squares::k3D) << std::endl;
-
-    return 0;
+    return usi::run();
 }

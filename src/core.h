@@ -189,28 +189,20 @@ namespace stoat {
         [[nodiscard]] static constexpr PieceType unpromotedFromChar(char c) {
             switch (c) {
                 case 'P':
-                case 'p':
                     return PieceType{kPawnId};
                 case 'L':
-                case 'l':
                     return PieceType{kLanceId};
                 case 'N':
-                case 'n':
                     return PieceType{kKnightId};
                 case 'S':
-                case 's':
                     return PieceType{kSilverId};
                 case 'G':
-                case 'g':
                     return PieceType{kGoldId};
                 case 'B':
-                case 'b':
                     return PieceType{kBishopId};
                 case 'R':
-                case 'r':
                     return PieceType{kRookId};
                 case 'K':
-                case 'k':
                     return PieceType{kKingId};
                 default:
                     return PieceType{kNoneId};

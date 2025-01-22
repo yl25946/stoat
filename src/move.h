@@ -24,8 +24,11 @@
 #include <cassert>
 
 #include "core.h"
+#include "util/result.h"
 
 namespace stoat {
+    struct InvalidMoveError {};
+
     class Move {
     public:
         constexpr Move() = default;
@@ -117,6 +120,42 @@ namespace stoat {
 
             return Move{static_cast<u16>((to.raw() << kToShift) | (pieceIdx << kDropPieceShift) | (1 << kDropFlagShift))
             };
+        }
+
+        [[nodiscard]] static constexpr util::Result<Move, InvalidMoveError> fromStr(std::string_view str) {
+            if (str.size() < 4 || str.size() > 5) {
+                return util::err<InvalidMoveError>();
+            }
+
+            if (str[1] == '*') {
+                if (str.size() != 4) {
+                    return util::err<InvalidMoveError>();
+                }
+
+                const auto piece = PieceType::unpromotedFromChar(str[0]);
+                const auto square = Square::fromStr(str.substr(2, 2));
+
+                if (!piece || !square || piece == PieceTypes::kKing) {
+                    return util::err<InvalidMoveError>();
+                }
+
+                return util::ok(makeDrop(piece, square));
+            }
+
+            if (str.size() == 5 && str[4] != '+') {
+                return util::err<InvalidMoveError>();
+            }
+
+            const bool promo = str.size() == 5;
+
+            const auto from = Square::fromStr(str.substr(0, 2));
+            const auto to = Square::fromStr(str.substr(2, 2));
+
+            if (!from || !to) {
+                return util::err<InvalidMoveError>();
+            }
+
+            return util::ok(promo ? makePromotion(from, to) : makeNormal(from, to));
         }
 
     private:
