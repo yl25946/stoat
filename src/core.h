@@ -295,6 +295,11 @@ namespace stoat {
             return static_cast<usize>(m_id);
         }
 
+        [[nodiscard]] constexpr bool isPromoted() const {
+            assert(m_id <= kNoneId);
+            return type().isPromoted();
+        }
+
         [[nodiscard]] constexpr PieceType type() const {
             assert(m_id != kNoneId);
             return PieceType::fromRaw(m_id >> 1);

@@ -42,5 +42,11 @@ i32 main() {
         std::cerr << "failed to parse SFEN: " << parsed.takeErr().message() << std::endl;
     }
 
+    std::cout << std::endl;
+
+    std::cout << Move::makeNormal(Squares::k7G, Squares::k7F) << std::endl;
+    std::cout << Move::makePromotion(Squares::k4E, Squares::k3C) << std::endl;
+    std::cout << Move::makeDrop(PieceTypes::kPawn, Squares::k3D) << std::endl;
+
     return 0;
 }

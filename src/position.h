@@ -27,6 +27,7 @@
 #include <string_view>
 
 #include "bitboard.h"
+#include "move.h"
 #include "util/result.h"
 
 namespace stoat {
@@ -72,6 +73,8 @@ namespace stoat {
 
         Position(const Position&) = default;
         Position(Position&&) = default;
+
+        [[nodiscard]] Position applyMove(Move move) const;
 
         [[nodiscard]] inline Bitboard occupancy() const {
             return m_colors[0] | m_colors[1];
@@ -137,6 +140,8 @@ namespace stoat {
         u16 m_moveCount{1};
 
         void addPiece(Square square, Piece piece);
+        void movePiece(Square from, Square to, Piece piece);
+        void promotePiece(Square from, Square to, Piece piece);
 
         void regen();
     };

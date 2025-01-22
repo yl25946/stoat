@@ -107,7 +107,7 @@ namespace stoat::util {
 
         template <typename... Args>
         [[nodiscard]] static constexpr Result<T, E> ofErr(Args&&... args) {
-            return Result<T, E>{ErrTag, std::forward<Args>(args)...};
+            return Result<T, E>{kErrTag, std::forward<Args>(args)...};
         }
 
         [[nodiscard]] constexpr bool ok() const {
@@ -132,7 +132,7 @@ namespace stoat::util {
             }
 
             auto v = std::move(std::get<T>(m_value));
-            m_value = Empty;
+            m_value = kEmpty;
             return v;
         }
 
@@ -142,7 +142,7 @@ namespace stoat::util {
             }
 
             auto v = std::move(std::get<ErrContainer>(m_value).value);
-            m_value = Empty;
+            m_value = kEmpty;
             return v;
         }
 
@@ -161,7 +161,7 @@ namespace stoat::util {
 
     private:
         struct ErrTagType {};
-        static constexpr ErrTagType ErrTag{};
+        static constexpr ErrTagType kErrTag{};
 
         struct ErrContainer {
             E value;
@@ -172,7 +172,7 @@ namespace stoat::util {
         };
 
         struct EmptyType {};
-        static constexpr EmptyType Empty{};
+        static constexpr EmptyType kEmpty{};
 
         template <typename... Args>
         explicit constexpr Result(Args&&... args) :

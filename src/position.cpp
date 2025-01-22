@@ -179,13 +179,104 @@ namespace stoat {
         m_mailbox.fill(Pieces::kNone);
     }
 
+    Position Position::applyMove(Move move) const {
+        auto newPos = *this;
+
+        const auto stm = this->stm();
+
+        if (move.isDrop()) {
+            const auto square = move.to();
+            const auto piece = move.dropPiece();
+
+            auto& hand = newPos.m_hands[stm.idx()];
+
+            assert(!newPos.pieceOn(square));
+            assert(hand.count(piece) > 0);
+
+            newPos.addPiece(square, piece.withColor(stm));
+            hand.decrement(piece);
+        } else {
+            const auto to = move.to();
+            const auto from = move.from();
+
+            const auto piece = newPos.pieceOn(from);
+
+            if (move.isPromo()) {
+                newPos.promotePiece(from, to, piece);
+            } else {
+                newPos.movePiece(from, to, piece);
+            }
+        }
+
+        ++newPos.m_moveCount;
+        newPos.m_stm = newPos.m_stm.flip();
+
+        return newPos;
+    }
+
     void Position::addPiece(Square square, Piece piece) {
+        assert(square);
+        assert(piece);
+
         assert(!pieceOn(square));
 
         m_colors[piece.color().idx()] |= square.bit();
         m_pieces[piece.type().idx()] |= square.bit();
 
         m_mailbox[square.idx()] = piece;
+    }
+
+    void Position::movePiece(Square from, Square to, Piece piece) {
+        assert(from);
+        assert(to);
+        assert(from != to);
+
+        assert(piece);
+
+        const auto captured = pieceOn(to);
+        assert(!captured || captured.color() != piece.color());
+
+        if (captured) {
+            m_colors[captured.color().idx()] ^= to.bit();
+            m_pieces[captured.type().idx()] ^= to.bit();
+
+            m_hands[captured.color().flip().idx()].increment(captured.type().unpromoted());
+        }
+
+        m_colors[piece.color().idx()] ^= from.bit() ^ to.bit();
+        m_pieces[piece.type().idx()] ^= from.bit() ^ to.bit();
+
+        m_mailbox[from.idx()] = Pieces::kNone;
+        m_mailbox[to.idx()] = piece;
+    }
+
+    void Position::promotePiece(Square from, Square to, Piece piece) {
+        assert(from);
+        assert(to);
+        assert(from != to);
+
+        assert(piece);
+        assert(!piece.isPromoted());
+
+        const auto captured = pieceOn(to);
+        assert(!captured || captured.color() != piece.color());
+
+        if (captured) {
+            m_colors[captured.color().idx()] ^= to.bit();
+            m_pieces[captured.type().idx()] ^= to.bit();
+
+            m_hands[captured.color().flip().idx()].increment(captured.type().unpromoted());
+        }
+
+        const auto promoted = piece.promoted();
+
+        m_colors[piece.color().idx()] ^= from.bit() ^ to.bit();
+
+        m_pieces[piece.type().idx()] ^= from.bit();
+        m_pieces[promoted.type().idx()] ^= to.bit();
+
+        m_mailbox[from.idx()] = Pieces::kNone;
+        m_mailbox[to.idx()] = promoted;
     }
 
     void Position::regen() {
