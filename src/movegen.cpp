@@ -82,12 +82,20 @@ namespace stoat::movegen {
 
                     serializePromotions(dst, piece, attacks);
                 }
+
+                promotable = pieces & promoArea;
+                while (!promotable.empty()) {
+                    const auto piece = promotable.popLsb();
+                    const auto attacks = attackGetter(pos.stm(), piece) & mask & ~promoArea;
+
+                    serializePromotions(dst, piece, attacks);
+                }
             }
 
-            auto movable = pieces & nonPromoMask;
+            auto movable = pieces;
             while (!movable.empty()) {
                 const auto piece = movable.popLsb();
-                const auto attacks = attackGetter(pos.stm(), piece) & mask;
+                const auto attacks = attackGetter(pos.stm(), piece) & mask & nonPromoMask;
 
                 serializeNormals(dst, piece, attacks);
             }

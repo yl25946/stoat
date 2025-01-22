@@ -246,6 +246,10 @@ namespace stoat {
             return true;
         }
 
+        if (const auto kings = pieceBb(PieceTypes::kKing, attacker); !(kings & attacks::kingAttacks(sq)).empty()) {
+            return true;
+        }
+
         //TODO sliders
 
         return false;
@@ -313,6 +317,7 @@ namespace stoat {
 
         const auto captured = pieceOn(to);
         assert(!captured || captured.color() != piece.color());
+        assert(!captured || captured.type() != PieceTypes::kKing);
 
         if (captured) {
             m_colors[captured.color().idx()] ^= to.bit();
@@ -338,6 +343,7 @@ namespace stoat {
 
         const auto captured = pieceOn(to);
         assert(!captured || captured.color() != piece.color());
+        assert(!captured || captured.type() != PieceTypes::kKing);
 
         if (captured) {
             m_colors[captured.color().idx()] ^= to.bit();
