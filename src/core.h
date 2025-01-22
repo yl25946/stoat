@@ -106,6 +106,12 @@ namespace stoat {
                 || m_id == kPromotedSilverId || m_id == kPromotedBishopId || m_id == kPromotedRookId;
         }
 
+        [[nodiscard]] constexpr bool canPromote() const {
+            assert(m_id <= kNoneId);
+            return m_id == kPawnId || m_id == kLanceId || m_id == kKnightId || m_id == kSilverId || m_id == kBishopId
+                || m_id == kRookId;
+        }
+
         [[nodiscard]] constexpr Piece withColor(Color c) const;
 
         [[nodiscard]] constexpr PieceType promoted() const {
@@ -552,10 +558,6 @@ namespace stoat {
             assert(m_id + offset >= 0);
             assert(m_id + offset < kNoneId);
             return fromRaw(m_id + offset);
-        }
-
-        [[nodiscard]] constexpr Square rotate() const {
-            return fromRaw(kNoneId - m_id - 1);
         }
 
         [[nodiscard]] static constexpr Square fromRaw(u8 id) {

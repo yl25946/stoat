@@ -20,6 +20,8 @@
 
 #include "types.h"
 
+#include <array>
+#include <cassert>
 #include <iostream>
 
 #include "core.h"
@@ -36,6 +38,11 @@ namespace stoat {
         constexpr i32 kNorthEast = 10;
         constexpr i32 kSouthWest = -10;
         constexpr i32 kSouthEast = -8;
+
+        [[nodiscard]] constexpr i32 relativeOffset(Color c, i32 offset) {
+            assert(c);
+            return c == Colors::kBlack ? offset : -offset;
+        }
     } // namespace offsets
 
     class alignas(16) Bitboard {
@@ -234,6 +241,100 @@ namespace stoat {
             return Bitboard{(m_bb & ~kFile1) >> -offsets::kSouthEast};
         }
 
+        [[nodiscard]] constexpr Bitboard shiftNorthRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftNorth();
+            } else {
+                return shiftSouth();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard shiftSouthRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftSouth();
+            } else {
+                return shiftNorth();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard shiftWestRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftWest();
+            } else {
+                return shiftEast();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard shiftEastRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftEast();
+            } else {
+                return shiftWest();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard shiftNorthWestRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftNorthWest();
+            } else {
+                return shiftSouthEast();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard shiftNorthEastRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftNorthEast();
+            } else {
+                return shiftSouthWest();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard shiftSouthWestRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftSouthWest();
+            } else {
+                return shiftNorthEast();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard shiftSouthEastRelative(Color c) const {
+            assert(c);
+            if (c == Colors::kBlack) {
+                return shiftSouthEast();
+            } else {
+                return shiftNorthWest();
+            }
+        }
+
+        [[nodiscard]] constexpr Bitboard fillUp() const {
+            auto b = m_bb;
+            b |= b << 9;
+            b |= b << 18;
+            b |= b << 36;
+            b |= b << 72;
+            return Bitboard{b & kAll};
+        }
+
+        [[nodiscard]] constexpr Bitboard fillDown() const {
+            auto b = m_bb;
+            b |= b >> 9;
+            b |= b >> 18;
+            b |= b >> 36;
+            b |= b >> 72;
+            return Bitboard{b & kAll};
+        }
+
+        [[nodiscard]] constexpr Bitboard fillFile() const {
+            return fillUp() | fillDown();
+        }
+
         [[nodiscard]] constexpr u128 raw() const {
             return m_bb;
         }
@@ -323,5 +424,50 @@ namespace stoat {
         static constexpr Bitboard kFile3 = Bitboard{Bitboard::kFile3};
         static constexpr Bitboard kFile2 = Bitboard{Bitboard::kFile2};
         static constexpr Bitboard kFile1 = Bitboard{Bitboard::kFile1};
+
+        static constexpr std::array kRanks = {
+            kRankI,
+            kRankH,
+            kRankG,
+            kRankF,
+            kRankE,
+            kRankD,
+            kRankC,
+            kRankB,
+            kRankA,
+        };
+
+        static constexpr std::array kFiles = {
+            kFile9,
+            kFile8,
+            kFile7,
+            kFile6,
+            kFile5,
+            kFile4,
+            kFile3,
+            kFile2,
+            kFile1,
+        };
+
+        [[nodiscard]] static constexpr Bitboard promoArea(Color c) {
+            constexpr std::array<Bitboard, 2> kPromoAreas = {
+                kRankA | kRankB | kRankC, // black
+                kRankI | kRankH | kRankG, // white
+            };
+
+            assert(c);
+
+            return kPromoAreas[c.idx()];
+        }
+
+        [[nodiscard]] static constexpr Bitboard relativeRank(Color c, u32 rank) {
+            assert(c);
+            assert(rank >= 0 && rank < 9);
+            if (c == Colors::kBlack) {
+                return kRanks[rank];
+            } else {
+                return kRanks[8 - rank];
+            }
+        }
     };
 } // namespace stoat

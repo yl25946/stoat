@@ -20,6 +20,7 @@
 
 #include <sstream>
 
+#include "attacks/attacks.h"
 #include "util/parse.h"
 #include "util/split.h"
 
@@ -214,6 +215,83 @@ namespace stoat {
         return newPos;
     }
 
+    bool Position::isAttacked(Square sq, Color attacker) const {
+        assert(sq);
+        assert(attacker);
+
+        const auto c = attacker.flip();
+
+        if (const auto pawns = pieceBb(PieceTypes::kPawn, attacker); !(pawns & attacks::pawnAttacks(c, sq)).empty()) {
+            return true;
+        }
+
+        if (const auto knights = pieceBb(PieceTypes::kKnight, attacker);
+            !(knights & attacks::knightAttacks(c, sq)).empty())
+        {
+            return true;
+        }
+
+        if (const auto silvers = pieceBb(PieceTypes::kSilver, attacker);
+            !(silvers & attacks::silverAttacks(c, sq)).empty())
+        {
+            return true;
+        }
+
+        if (const auto golds = pieceBb(PieceTypes::kGold, attacker) | pieceBb(PieceTypes::kPromotedPawn, attacker)
+                             | pieceBb(PieceTypes::kPromotedLance, attacker)
+                             | pieceBb(PieceTypes::kPromotedKnight, attacker)
+                             | pieceBb(PieceTypes::kPromotedSilver, attacker);
+            !(golds & attacks::goldAttacks(c, sq)).empty())
+        {
+            return true;
+        }
+
+        //TODO sliders
+
+        return false;
+    }
+
+    std::string Position::sfen() const {
+        std::ostringstream sfen{};
+
+        for (i32 rank = 8; rank >= 0; --rank) {
+            for (i32 file = 0; file < 9; ++file) {
+                if (const auto piece = pieceOn(Square::fromFileRank(file, rank)); piece == Pieces::kNone) {
+                    u32 emptySquares = 1;
+                    for (; file < 8 && pieceOn(Square::fromFileRank(file + 1, rank)) == Pieces::kNone;
+                         ++file, ++emptySquares)
+                    {}
+
+                    sfen << emptySquares;
+                } else {
+                    sfen << piece;
+                }
+            }
+
+            if (rank > 0) {
+                sfen << '/';
+            }
+        }
+
+        sfen << (stm() == Colors::kBlack ? " b " : " w ");
+
+        const auto& blackHand = hand(Colors::kBlack);
+        const auto& whiteHand = hand(Colors::kWhite);
+
+        if (blackHand.empty() && whiteHand.empty()) {
+            sfen << '-';
+        } else {
+            sfen << blackHand.sfen(true);
+            sfen << whiteHand.sfen(false);
+        }
+
+        sfen << ' ';
+
+        sfen << moveCount();
+
+        return sfen.str();
+    }
+
     void Position::addPiece(Square square, Piece piece) {
         assert(square);
         assert(piece);
@@ -292,47 +370,6 @@ namespace stoat {
                 m_mailbox[sq.idx()] = piece;
             }
         }
-    }
-
-    std::string Position::sfen() const {
-        std::ostringstream sfen{};
-
-        for (i32 rank = 8; rank >= 0; --rank) {
-            for (i32 file = 0; file < 9; ++file) {
-                if (const auto piece = pieceOn(Square::fromFileRank(file, rank)); piece == Pieces::kNone) {
-                    u32 emptySquares = 1;
-                    for (; file < 8 && pieceOn(Square::fromFileRank(file + 1, rank)) == Pieces::kNone;
-                         ++file, ++emptySquares)
-                    {}
-
-                    sfen << emptySquares;
-                } else {
-                    sfen << piece;
-                }
-            }
-
-            if (rank > 0) {
-                sfen << '/';
-            }
-        }
-
-        sfen << (stm() == Colors::kBlack ? " b " : " w ");
-
-        const auto& blackHand = hand(Colors::kBlack);
-        const auto& whiteHand = hand(Colors::kWhite);
-
-        if (blackHand.empty() && whiteHand.empty()) {
-            sfen << '-';
-        } else {
-            sfen << blackHand.sfen(true);
-            sfen << whiteHand.sfen(false);
-        }
-
-        sfen << ' ';
-
-        sfen << moveCount();
-
-        return sfen.str();
     }
 
     Position Position::startpos() {

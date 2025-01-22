@@ -95,6 +95,12 @@ namespace stoat {
             return m_colors[piece.color().idx()] & m_pieces[piece.type().idx()];
         }
 
+        [[nodiscard]] inline Bitboard pieceBb(PieceType pt, Color c) const {
+            assert(pt);
+            assert(c);
+            return m_colors[c.idx()] & m_pieces[pt.idx()];
+        }
+
         [[nodiscard]] inline Piece pieceOn(Square square) const {
             assert(square);
             return m_mailbox[square.idx()];
@@ -112,6 +118,13 @@ namespace stoat {
         [[nodiscard]] inline u32 moveCount() const {
             return m_moveCount;
         }
+
+        [[nodiscard]] inline Square king(Color c) const {
+            assert(c);
+            return pieceBb(PieceTypes::kKing, c).lsb();
+        }
+
+        [[nodiscard]] bool isAttacked(Square sq, Color attacker) const;
 
         [[nodiscard]] std::string sfen() const;
 

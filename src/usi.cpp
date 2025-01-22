@@ -24,7 +24,9 @@
 #include <string_view>
 #include <vector>
 
+#include "perft.h"
 #include "position.h"
+#include "util/parse.h"
 #include "util/split.h"
 #include "util/string_map.h"
 
@@ -54,6 +56,7 @@ namespace stoat::usi {
 
             // nonstandard
             void handle_d(std::span<std::string_view> args);
+            void handle_splitperft(std::span<std::string_view> args);
         };
 
         UsiHandler::UsiHandler() {
@@ -63,7 +66,9 @@ namespace stoat::usi {
             REGISTER_HANDLER(usinewgame);
             REGISTER_HANDLER(isready);
             REGISTER_HANDLER(position);
+
             REGISTER_HANDLER(d);
+            REGISTER_HANDLER(splitperft);
 
 #undef REGISTER_HANDLER
         }
@@ -157,6 +162,16 @@ namespace stoat::usi {
         void UsiHandler::handle_d([[maybe_unused]] std::span<std::string_view> args) {
             std::cout << '\n' << m_pos;
             std::cout << "\n\nSfen: " << m_pos.sfen() << std::endl;
+        }
+
+        void UsiHandler::handle_splitperft(std::span<std::string_view> args) {
+            if (args.empty()) {
+                return;
+            }
+
+            if (const auto depth = util::tryParse<i32>(args[0])) {
+                splitPerft(m_pos, *depth);
+            }
         }
     } // namespace
 
