@@ -134,4 +134,14 @@ namespace stoat::attacks {
         assert(sq);
         return tables::kKingAttacks[sq.idx()];
     }
+
+    [[nodiscard]] inline Bitboard promotedBishopAttacks(Square sq, Bitboard occ) {
+        assert(sq);
+        return bishopAttacks(sq, occ) | tables::kKingAttacks[sq.idx()];
+    }
+
+    [[nodiscard]] inline Bitboard promotedRookAttacks(Square sq, Bitboard occ) {
+        assert(sq);
+        return rookAttacks(sq, occ) | tables::kKingAttacks[sq.idx()];
+    }
 } // namespace stoat::attacks

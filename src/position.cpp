@@ -221,6 +221,11 @@ namespace stoat {
 
         const auto c = attacker.flip();
 
+        const auto horses = pieceBb(PieceTypes::kPromotedBishop, attacker);
+        const auto dragons = pieceBb(PieceTypes::kPromotedRook, attacker);
+
+        const auto rooks = dragons | pieceBb(PieceTypes::kRook, attacker);
+
         if (const auto pawns = pieceBb(PieceTypes::kPawn, attacker); !(pawns & attacks::pawnAttacks(c, sq)).empty()) {
             return true;
         }
@@ -246,11 +251,29 @@ namespace stoat {
             return true;
         }
 
-        if (const auto kings = pieceBb(PieceTypes::kKing, attacker); !(kings & attacks::kingAttacks(sq)).empty()) {
+        if (const auto kings = horses | dragons | pieceBb(PieceTypes::kKing, attacker);
+            !(kings & attacks::kingAttacks(sq)).empty())
+        {
             return true;
         }
 
-        //TODO sliders
+        const auto occ = occupancy();
+
+        if (const auto lances = rooks | pieceBb(PieceTypes::kLance, attacker);
+            !(lances & attacks::lanceAttacks(c, sq, occ)).empty())
+        {
+            return true;
+        }
+
+        if (const auto bishops = horses | pieceBb(PieceTypes::kBishop, attacker);
+            !(bishops & attacks::bishopAttacks(sq, occ)).empty())
+        {
+            return true;
+        }
+
+        if (!(rooks & attacks::rookAttacks(sq, occ)).empty()) {
+            return true;
+        }
 
         return false;
     }
