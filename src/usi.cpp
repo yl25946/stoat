@@ -195,10 +195,10 @@ namespace stoat::usi {
                         std::cout << "bestmove " << move << std::endl;
                         break;
                     }
-                } else {
-                    std::swap(moves[start], moves[idx]);
-                    ++start;
                 }
+
+                std::swap(moves[start], moves[idx]);
+                ++start;
             }
         }
 
