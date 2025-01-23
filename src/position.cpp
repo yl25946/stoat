@@ -22,6 +22,7 @@
 #include <sstream>
 
 #include "attacks/attacks.h"
+#include "keys.h"
 #include "movegen.h"
 #include "rays.h"
 #include "util/parse.h"
@@ -29,35 +30,35 @@
 
 namespace stoat {
     namespace {
-        constexpr i32 PawnHandBits = 5;
-        constexpr i32 LanceHandBits = 3;
-        constexpr i32 KnightHandBits = 3;
-        constexpr i32 SilverHandBits = 3;
-        constexpr i32 GoldHandBits = 3;
-        constexpr i32 BishopHandBits = 2;
-        constexpr i32 RookHandBits = 2;
+        constexpr i32 kPawnHandBits = 5;
+        constexpr i32 kLanceHandBits = 3;
+        constexpr i32 kKnightHandBits = 3;
+        constexpr i32 kSilverHandBits = 3;
+        constexpr i32 kGoldHandBits = 3;
+        constexpr i32 kBishopHandBits = 2;
+        constexpr i32 kRookHandBits = 2;
 
-        constexpr i32 PawnHandOffset = 0;
-        constexpr i32 LanceHandOffset = PawnHandOffset + PawnHandBits;
-        constexpr i32 KnightHandOffset = LanceHandOffset + LanceHandBits;
-        constexpr i32 SilverHandOffset = KnightHandOffset + KnightHandBits;
-        constexpr i32 GoldHandOffset = SilverHandOffset + SilverHandBits;
-        constexpr i32 BishopHandOffset = GoldHandOffset + GoldHandBits;
-        constexpr i32 RookHandOffset = BishopHandOffset + BishopHandBits;
+        constexpr i32 kPawnHandOffset = 0;
+        constexpr i32 kLanceHandOffset = kPawnHandOffset + kPawnHandBits;
+        constexpr i32 kKnightHandOffset = kLanceHandOffset + kLanceHandBits;
+        constexpr i32 kSilverHandOffset = kKnightHandOffset + kKnightHandBits;
+        constexpr i32 kGoldHandOffset = kSilverHandOffset + kSilverHandBits;
+        constexpr i32 kBishopHandOffset = kGoldHandOffset + kGoldHandBits;
+        constexpr i32 kRookHandOffset = kBishopHandOffset + kBishopHandBits;
 
-        static_assert(RookHandOffset + RookHandBits <= 32);
+        static_assert(kRookHandOffset + kRookHandBits <= 32);
 
         constexpr auto kHandOffsets = [] {
             std::array<i32, PieceTypes::kCount> offsets{};
             offsets.fill(-1);
 
-            offsets[PieceTypes::kPawn.idx()] = PawnHandOffset;
-            offsets[PieceTypes::kLance.idx()] = LanceHandOffset;
-            offsets[PieceTypes::kKnight.idx()] = KnightHandOffset;
-            offsets[PieceTypes::kSilver.idx()] = SilverHandOffset;
-            offsets[PieceTypes::kGold.idx()] = GoldHandOffset;
-            offsets[PieceTypes::kBishop.idx()] = BishopHandOffset;
-            offsets[PieceTypes::kRook.idx()] = RookHandOffset;
+            offsets[PieceTypes::kPawn.idx()] = kPawnHandOffset;
+            offsets[PieceTypes::kLance.idx()] = kLanceHandOffset;
+            offsets[PieceTypes::kKnight.idx()] = kKnightHandOffset;
+            offsets[PieceTypes::kSilver.idx()] = kSilverHandOffset;
+            offsets[PieceTypes::kGold.idx()] = kGoldHandOffset;
+            offsets[PieceTypes::kBishop.idx()] = kBishopHandOffset;
+            offsets[PieceTypes::kRook.idx()] = kRookHandOffset;
 
             return offsets;
         }();
@@ -65,13 +66,13 @@ namespace stoat {
         constexpr auto kHandMasks = [] {
             std::array<u32, PieceTypes::kCount> masks{};
 
-            masks[PieceTypes::kPawn.idx()] = ((1 << PawnHandBits) - 1) << PawnHandOffset;
-            masks[PieceTypes::kLance.idx()] = ((1 << LanceHandBits) - 1) << LanceHandOffset;
-            masks[PieceTypes::kKnight.idx()] = ((1 << KnightHandBits) - 1) << KnightHandOffset;
-            masks[PieceTypes::kSilver.idx()] = ((1 << SilverHandBits) - 1) << SilverHandOffset;
-            masks[PieceTypes::kGold.idx()] = ((1 << GoldHandBits) - 1) << GoldHandOffset;
-            masks[PieceTypes::kBishop.idx()] = ((1 << BishopHandBits) - 1) << BishopHandOffset;
-            masks[PieceTypes::kRook.idx()] = ((1 << RookHandBits) - 1) << RookHandOffset;
+            masks[PieceTypes::kPawn.idx()] = ((1 << kPawnHandBits) - 1) << kPawnHandOffset;
+            masks[PieceTypes::kLance.idx()] = ((1 << kLanceHandBits) - 1) << kLanceHandOffset;
+            masks[PieceTypes::kKnight.idx()] = ((1 << kKnightHandBits) - 1) << kKnightHandOffset;
+            masks[PieceTypes::kSilver.idx()] = ((1 << kSilverHandBits) - 1) << kSilverHandOffset;
+            masks[PieceTypes::kGold.idx()] = ((1 << kGoldHandBits) - 1) << kGoldHandOffset;
+            masks[PieceTypes::kBishop.idx()] = ((1 << kBishopHandBits) - 1) << kBishopHandOffset;
+            masks[PieceTypes::kRook.idx()] = ((1 << kRookHandBits) - 1) << kRookHandOffset;
 
             return masks;
         }();
@@ -88,18 +89,20 @@ namespace stoat {
         return (m_hand & mask) >> offset;
     }
 
-    void Hand::increment(PieceType pt) {
+    u32 Hand::increment(PieceType pt) {
         assert(pt);
         const auto curr = count(pt);
         assert(curr < (kHandMasks[pt.idx()] >> kHandOffsets[pt.idx()]));
         set(pt, curr + 1);
+        return curr + 1;
     }
 
-    void Hand::decrement(PieceType pt) {
+    u32 Hand::decrement(PieceType pt) {
         assert(pt);
         const auto curr = count(pt);
         assert(curr > 0);
         set(pt, curr - 1);
+        return curr - 1;
     }
 
     void Hand::set(PieceType pt, u32 count) {
@@ -179,6 +182,42 @@ namespace stoat {
         return stream;
     }
 
+    void PositionKeys::clear() {
+        all = 0;
+    }
+
+    void PositionKeys::flipPiece(Piece piece, Square sq) {
+        assert(piece);
+        assert(sq);
+        all ^= keys::pieceSquare(piece, sq);
+    }
+
+    void PositionKeys::movePiece(Piece piece, Square from, Square to) {
+        assert(piece);
+        assert(from);
+        assert(to);
+        all ^= keys::pieceSquare(piece, from) ^ keys::pieceSquare(piece, to);
+    }
+
+    void PositionKeys::flipStm() {
+        all ^= keys::stm();
+    }
+
+    void PositionKeys::flipHandCount(Color c, PieceType pt, u32 count) {
+        assert(c);
+        assert(pt);
+        assert(count <= maxPiecesInHand(pt));
+        all ^= keys::pieceInHand(c, pt, count);
+    }
+
+    void PositionKeys::switchHandCount(Color c, PieceType pt, u32 before, u32 after) {
+        assert(c);
+        assert(pt);
+        assert(before <= maxPiecesInHand(pt));
+        assert(after <= maxPiecesInHand(pt));
+        all ^= keys::pieceInHand(c, pt, before) ^ keys::pieceInHand(c, pt, after);
+    }
+
     Position::Position() {
         m_mailbox.fill(Pieces::kNone);
     }
@@ -186,19 +225,15 @@ namespace stoat {
     Position Position::applyMove(Move move) const {
         auto newPos = *this;
 
+        //s_debugKeys = true;
+
         const auto stm = this->stm();
 
         if (move.isDrop()) {
-            const auto square = move.to();
-            const auto piece = move.dropPiece();
+            const auto sq = move.to();
+            const auto piece = move.dropPiece().withColor(stm);
 
-            auto& hand = newPos.m_hands[stm.idx()];
-
-            assert(!newPos.pieceOn(square));
-            assert(hand.count(piece) > 0);
-
-            newPos.addPiece(square, piece.withColor(stm));
-            hand.decrement(piece);
+            newPos.dropPiece(sq, piece);
         } else {
             const auto to = move.to();
             const auto from = move.from();
@@ -213,7 +248,9 @@ namespace stoat {
         }
 
         ++newPos.m_moveCount;
+
         newPos.m_stm = newPos.m_stm.flip();
+        newPos.m_keys.flipStm();
 
         newPos.updateAttacks();
 
@@ -443,16 +480,43 @@ namespace stoat {
         return sfen.str();
     }
 
-    void Position::addPiece(Square square, Piece piece) {
-        assert(square);
+    void Position::regenKey() {
+        m_keys.clear();
+
+        auto occ = occupancy();
+        while (!occ.empty()) {
+            const auto sq = occ.popLsb();
+            const auto piece = pieceOn(sq);
+
+            assert(piece);
+
+            m_keys.flipPiece(piece, sq);
+        }
+
+        if (stm() == Colors::kWhite) {
+            m_keys.flipStm();
+        }
+
+        for (const auto c : {Colors::kBlack, Colors::kWhite}) {
+            const auto& hand = this->hand(c);
+            for (const auto pt : kHandPieces) {
+                m_keys.flipHandCount(c, pt, hand.count(pt));
+            }
+        }
+    }
+
+    void Position::addPiece(Square sq, Piece piece) {
+        assert(sq);
         assert(piece);
 
-        assert(!pieceOn(square));
+        assert(!pieceOn(sq));
 
-        m_colors[piece.color().idx()] |= square.bit();
-        m_pieces[piece.type().idx()] |= square.bit();
+        m_colors[piece.color().idx()] |= sq.bit();
+        m_pieces[piece.type().idx()] |= sq.bit();
 
-        m_mailbox[square.idx()] = piece;
+        m_mailbox[sq.idx()] = piece;
+
+        m_keys.flipPiece(piece, sq);
     }
 
     void Position::movePiece(Square from, Square to, Piece piece) {
@@ -470,7 +534,12 @@ namespace stoat {
             m_colors[captured.color().idx()] ^= to.bit();
             m_pieces[captured.type().idx()] ^= to.bit();
 
-            m_hands[captured.color().flip().idx()].increment(captured.type().unpromoted());
+            const auto handPt = captured.type().unpromoted();
+
+            const auto newCount = m_hands[captured.color().flip().idx()].increment(handPt);
+            m_keys.switchHandCount(piece.color(), handPt, newCount - 1, newCount);
+
+            m_keys.flipPiece(captured, to);
         }
 
         m_colors[piece.color().idx()] ^= from.bit() ^ to.bit();
@@ -478,6 +547,8 @@ namespace stoat {
 
         m_mailbox[from.idx()] = Pieces::kNone;
         m_mailbox[to.idx()] = piece;
+
+        m_keys.movePiece(piece, from, to);
     }
 
     void Position::promotePiece(Square from, Square to, Piece piece) {
@@ -496,7 +567,12 @@ namespace stoat {
             m_colors[captured.color().idx()] ^= to.bit();
             m_pieces[captured.type().idx()] ^= to.bit();
 
-            m_hands[captured.color().flip().idx()].increment(captured.type().unpromoted());
+            const auto handPt = captured.type().unpromoted();
+
+            const auto newCount = m_hands[captured.color().flip().idx()].increment(handPt);
+            m_keys.switchHandCount(piece.color(), handPt, newCount - 1, newCount);
+
+            m_keys.flipPiece(captured, to);
         }
 
         const auto promoted = piece.promoted();
@@ -508,6 +584,21 @@ namespace stoat {
 
         m_mailbox[from.idx()] = Pieces::kNone;
         m_mailbox[to.idx()] = promoted;
+
+        m_keys.flipPiece(piece, from);
+        m_keys.flipPiece(promoted, to);
+    }
+
+    void Position::dropPiece(Square sq, Piece piece) {
+        auto& hand = m_hands[piece.color().idx()];
+
+        assert(!pieceOn(sq));
+        assert(hand.count(piece.type()) > 0);
+
+        addPiece(sq, piece);
+
+        const auto newCount = hand.decrement(piece.type());
+        m_keys.switchHandCount(piece.color(), piece.type(), newCount + 1, newCount);
     }
 
     void Position::updateAttacks() {
@@ -553,6 +644,7 @@ namespace stoat {
             }
         }
 
+        regenKey();
         updateAttacks();
     }
 
@@ -677,6 +769,7 @@ namespace stoat {
             return util::err<SfenError>("invalid move count " + std::string{sfen[3]});
         }
 
+        pos.regenKey();
         pos.updateAttacks();
 
         return util::ok(pos);

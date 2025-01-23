@@ -20,6 +20,7 @@
 
 #include "types.h"
 
+#include <bit>
 #include <cassert>
 #include <iostream>
 
@@ -788,5 +789,36 @@ namespace stoat {
         static constexpr Square kNone{Square::kNoneId};
 
         static constexpr usize kCount = kNone.idx();
+    };
+
+    constexpr auto kMaxInHand = [] {
+        const auto round = [](u32 count) { return (std::bit_floor(count) << 1) - 1; };
+
+        std::array<u32, PieceTypes::kCount> offsets{};
+
+        offsets[PieceTypes::kPawn.idx()] = round(18);
+        offsets[PieceTypes::kLance.idx()] = round(4);
+        offsets[PieceTypes::kKnight.idx()] = round(4);
+        offsets[PieceTypes::kSilver.idx()] = round(4);
+        offsets[PieceTypes::kGold.idx()] = round(4);
+        offsets[PieceTypes::kBishop.idx()] = round(2);
+        offsets[PieceTypes::kRook.idx()] = round(2);
+
+        return offsets;
+    }();
+
+    [[nodiscard]] constexpr u32 maxPiecesInHand(PieceType pt) {
+        assert(pt);
+        return kMaxInHand[pt.idx()];
+    }
+
+    constexpr std::array kHandPieces = {
+        PieceTypes::kPawn,
+        PieceTypes::kLance,
+        PieceTypes::kKnight,
+        PieceTypes::kSilver,
+        PieceTypes::kGold,
+        PieceTypes::kBishop,
+        PieceTypes::kRook,
     };
 } // namespace stoat

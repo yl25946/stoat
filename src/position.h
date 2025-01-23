@@ -39,8 +39,8 @@ namespace stoat {
 
         [[nodiscard]] u32 count(PieceType pt) const;
 
-        void increment(PieceType pt);
-        void decrement(PieceType pt);
+        u32 increment(PieceType pt);
+        u32 decrement(PieceType pt);
 
         void set(PieceType pt, u32 count);
 
@@ -65,6 +65,22 @@ namespace stoat {
 
     private:
         std::string m_message{};
+    };
+
+    struct PositionKeys {
+        u64 all{};
+
+        void clear();
+
+        void flipPiece(Piece piece, Square sq);
+        void movePiece(Piece piece, Square from, Square to);
+
+        void flipStm();
+
+        void flipHandCount(Color c, PieceType pt, u32 count);
+        void switchHandCount(Color c, PieceType pt, u32 before, u32 after);
+
+        [[nodiscard]] bool operator==(const PositionKeys&) const = default;
     };
 
     class Position {
@@ -111,6 +127,10 @@ namespace stoat {
             return m_hands[color.idx()];
         }
 
+        [[nodiscard]] inline u64 key() const {
+            return m_keys.all;
+        }
+
         [[nodiscard]] inline bool isInCheck() const {
             return !m_checkers.empty();
         }
@@ -148,6 +168,8 @@ namespace stoat {
 
         [[nodiscard]] std::string sfen() const;
 
+        void regenKey();
+
         [[nodiscard]] bool operator==(const Position&) const = default;
 
         Position& operator=(const Position&) = default;
@@ -168,6 +190,8 @@ namespace stoat {
 
         std::array<Hand, Colors::kCount> m_hands{};
 
+        PositionKeys m_keys{};
+
         Bitboard m_checkers{};
         Bitboard m_pinned{};
 
@@ -175,9 +199,10 @@ namespace stoat {
 
         u16 m_moveCount{1};
 
-        void addPiece(Square square, Piece piece);
+        void addPiece(Square sq, Piece piece);
         void movePiece(Square from, Square to, Piece piece);
         void promotePiece(Square from, Square to, Piece piece);
+        void dropPiece(Square sq, Piece piece);
 
         void updateAttacks();
 

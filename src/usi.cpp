@@ -19,7 +19,9 @@
 #include "usi.h"
 
 #include <functional>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -160,9 +162,18 @@ namespace stoat::usi {
         }
 
         void UsiHandler::handle_d([[maybe_unused]] std::span<std::string_view> args) {
+            const auto printKey = [](u64 key) {
+                std::ostringstream str{};
+                str << "0x" << std::hex << std::setw(16) << std::setfill('0') << key;
+                std::cout << str.view();
+            };
+
             std::cout << '\n' << m_pos;
 
             std::cout << "\n\nSfen: " << m_pos.sfen();
+
+            std::cout << "\nKey: ";
+            printKey(m_pos.key());
 
             std::cout << "\nCheckers:";
 
