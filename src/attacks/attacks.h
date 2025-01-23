@@ -106,42 +106,82 @@ namespace stoat::attacks {
         });
     } // namespace tables
 
-    [[nodiscard]] inline Bitboard pawnAttacks(Color c, Square sq) {
-        assert(c);
+    [[nodiscard]] constexpr Bitboard pawnAttacks(Square sq, Color c) {
         assert(sq);
+        assert(c);
         return tables::kPawnAttacks[c.idx()][sq.idx()];
     }
 
-    [[nodiscard]] inline Bitboard knightAttacks(Color c, Square sq) {
-        assert(c);
+    [[nodiscard]] constexpr Bitboard lanceAttacks(Square sq, Color c, Bitboard occ) {
         assert(sq);
+        assert(c);
+
+        if (std::is_constant_evaluated()) {
+            if (c == Colors::kBlack) {
+                return internal::generateMultiSlidingAttacks<offsets::kNorth>(sq, occ);
+            } else {
+                return internal::generateMultiSlidingAttacks<offsets::kSouth>(sq, occ);
+            }
+        }
+
+        return sliders::lanceAttacks(sq, c, occ);
+    }
+
+    [[nodiscard]] constexpr Bitboard knightAttacks(Square sq, Color c) {
+        assert(sq);
+        assert(c);
         return tables::kKnightAttacks[c.idx()][sq.idx()];
     }
 
-    [[nodiscard]] inline Bitboard silverAttacks(Color c, Square sq) {
-        assert(c);
+    [[nodiscard]] constexpr Bitboard silverAttacks(Square sq, Color c) {
         assert(sq);
+        assert(c);
         return tables::kSilverAttacks[c.idx()][sq.idx()];
     }
 
-    [[nodiscard]] inline Bitboard goldAttacks(Color c, Square sq) {
-        assert(c);
+    [[nodiscard]] constexpr Bitboard goldAttacks(Square sq, Color c) {
         assert(sq);
+        assert(c);
         return tables::kGoldAttacks[c.idx()][sq.idx()];
     }
 
-    [[nodiscard]] inline Bitboard kingAttacks(Square sq) {
+    [[nodiscard]] constexpr Bitboard bishopAttacks(Square sq, Bitboard occ) {
+        assert(sq);
+
+        if (std::is_constant_evaluated()) {
+            return internal::generateMultiSlidingAttacks<
+                offsets::kNorthWest,
+                offsets::kNorthEast,
+                offsets::kSouthWest,
+                offsets::kSouthEast>(sq, occ);
+        }
+
+        return sliders::bishopAttacks(sq, occ);
+    }
+
+    [[nodiscard]] constexpr Bitboard rookAttacks(Square sq, Bitboard occ) {
+        assert(sq);
+
+        if (std::is_constant_evaluated()) {
+            return internal::
+                generateMultiSlidingAttacks<offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>(sq, occ);
+        }
+
+        return sliders::rookAttacks(sq, occ);
+    }
+
+    [[nodiscard]] constexpr Bitboard kingAttacks(Square sq) {
         assert(sq);
         return tables::kKingAttacks[sq.idx()];
     }
 
-    [[nodiscard]] inline Bitboard promotedBishopAttacks(Square sq, Bitboard occ) {
+    [[nodiscard]] constexpr Bitboard promotedBishopAttacks(Square sq, Bitboard occ) {
         assert(sq);
-        return bishopAttacks(sq, occ) | tables::kKingAttacks[sq.idx()];
+        return bishopAttacks(sq, occ) | kingAttacks(sq);
     }
 
-    [[nodiscard]] inline Bitboard promotedRookAttacks(Square sq, Bitboard occ) {
+    [[nodiscard]] constexpr Bitboard promotedRookAttacks(Square sq, Bitboard occ) {
         assert(sq);
-        return rookAttacks(sq, occ) | tables::kKingAttacks[sq.idx()];
+        return rookAttacks(sq, occ) | kingAttacks(sq);
     }
 } // namespace stoat::attacks

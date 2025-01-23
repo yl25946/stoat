@@ -19,6 +19,7 @@
 #include "movegen.h"
 
 #include "attacks/attacks.h"
+#include "rays.h"
 
 namespace stoat::movegen {
     namespace {
@@ -67,10 +68,10 @@ namespace stoat::movegen {
             const Position& pos,
             Bitboard pieces,
             auto attackGetter,
+            Bitboard dstMask,
             Bitboard nonPromoMask = Bitboards::kAll
         ) {
             const auto stm = pos.stm();
-            const auto mask = ~pos.colorBb(stm);
 
             const auto occ = pos.occupancy();
 
@@ -80,7 +81,7 @@ namespace stoat::movegen {
                 auto promotable = pieces;
                 while (!promotable.empty()) {
                     const auto piece = promotable.popLsb();
-                    const auto attacks = attackGetter(pos.stm(), piece, occ) & mask & promoArea;
+                    const auto attacks = attackGetter(piece, pos.stm(), occ) & dstMask & promoArea;
 
                     serializePromotions(dst, piece, attacks);
                 }
@@ -88,7 +89,7 @@ namespace stoat::movegen {
                 promotable = pieces & promoArea;
                 while (!promotable.empty()) {
                     const auto piece = promotable.popLsb();
-                    const auto attacks = attackGetter(pos.stm(), piece, occ) & mask & ~promoArea;
+                    const auto attacks = attackGetter(piece, pos.stm(), occ) & dstMask & ~promoArea;
 
                     serializePromotions(dst, piece, attacks);
                 }
@@ -97,7 +98,7 @@ namespace stoat::movegen {
             auto movable = pieces;
             while (!movable.empty()) {
                 const auto piece = movable.popLsb();
-                const auto attacks = attackGetter(pos.stm(), piece, occ) & mask & nonPromoMask;
+                const auto attacks = attackGetter(piece, pos.stm(), occ) & dstMask & nonPromoMask;
 
                 serializeNormals(dst, piece, attacks);
             }
@@ -109,13 +110,15 @@ namespace stoat::movegen {
             const Position& pos,
             Bitboard pieces,
             auto attackGetter,
+            Bitboard dstMask,
             Bitboard nonPromoMask = Bitboards::kAll
         ) {
             generatePrecalculatedWithColorAndOcc<CanPromote>(
                 dst,
                 pos,
                 pieces,
-                [&](Color c, Square sq, Bitboard occ) { return attackGetter(c, sq); },
+                [&](Square sq, Color c, Bitboard occ) { return attackGetter(sq, c); },
+                dstMask,
                 nonPromoMask
             );
         }
@@ -126,13 +129,15 @@ namespace stoat::movegen {
             const Position& pos,
             Bitboard pieces,
             auto attackGetter,
+            Bitboard dstMask,
             Bitboard nonPromoMask = Bitboards::kAll
         ) {
             generatePrecalculatedWithColorAndOcc<CanPromote>(
                 dst,
                 pos,
                 pieces,
-                [&](Color c, Square sq, Bitboard occ) { return attackGetter(sq, occ); },
+                [&](Square sq, Color c, Bitboard occ) { return attackGetter(sq, occ); },
+                dstMask,
                 nonPromoMask
             );
         }
@@ -143,22 +148,24 @@ namespace stoat::movegen {
             const Position& pos,
             Bitboard pieces,
             auto attackGetter,
+            Bitboard dstMask,
             Bitboard nonPromoMask = Bitboards::kAll
         ) {
             generatePrecalculatedWithColorAndOcc<CanPromote>(
                 dst,
                 pos,
                 pieces,
-                [&](Color c, Square sq, Bitboard occ) { return attackGetter(sq); },
+                [&](Square sq, Color c, Bitboard occ) { return attackGetter(sq); },
+                dstMask,
                 nonPromoMask
             );
         }
 
-        void generatePawns(MoveList& dst, const Position& pos) {
+        void generatePawns(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto stm = pos.stm();
             const auto pawns = pos.pieceBb(PieceTypes::kPawn, stm);
 
-            const auto shifted = pawns.shiftNorthRelative(stm) & ~pos.colorBb(stm);
+            const auto shifted = pawns.shiftNorthRelative(stm) & dstMask;
 
             const auto promos = shifted & Bitboards::promoArea(stm);
             const auto nonPromos = shifted & ~Bitboards::relativeRank(stm, 8);
@@ -169,76 +176,84 @@ namespace stoat::movegen {
             serializeNormals(dst, offset, nonPromos);
         }
 
-        void generateLances(MoveList& dst, const Position& pos) {
+        void generateLances(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto lances = pos.pieceBb(PieceTypes::kLance, pos.stm());
             generatePrecalculatedWithColorAndOcc<true>(
                 dst,
                 pos,
                 lances,
                 attacks::lanceAttacks,
+                dstMask,
                 ~Bitboards::relativeRank(pos.stm(), 8)
             );
         }
 
-        void generateKnights(MoveList& dst, const Position& pos) {
+        void generateKnights(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto knights = pos.pieceBb(PieceTypes::kKnight, pos.stm());
             generatePrecalculatedWithColor<true>(
                 dst,
                 pos,
                 knights,
                 attacks::knightAttacks,
+                dstMask,
                 ~(Bitboards::relativeRank(pos.stm(), 8) | Bitboards::relativeRank(pos.stm(), 7))
             );
         }
 
-        void generateSilvers(MoveList& dst, const Position& pos) {
+        void generateSilvers(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto silvers = pos.pieceBb(PieceTypes::kSilver, pos.stm());
-            generatePrecalculatedWithColor<true>(dst, pos, silvers, attacks::silverAttacks);
+            generatePrecalculatedWithColor<true>(dst, pos, silvers, attacks::silverAttacks, dstMask);
         }
 
-        void generateGolds(MoveList& dst, const Position& pos) {
+        void generateGolds(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto golds = pos.pieceBb(PieceTypes::kGold, pos.stm())
                              | pos.pieceBb(PieceTypes::kPromotedPawn, pos.stm())
                              | pos.pieceBb(PieceTypes::kPromotedLance, pos.stm())
                              | pos.pieceBb(PieceTypes::kPromotedKnight, pos.stm())
                              | pos.pieceBb(PieceTypes::kPromotedSilver, pos.stm());
-            generatePrecalculatedWithColor<false>(dst, pos, golds, attacks::goldAttacks);
+            generatePrecalculatedWithColor<false>(dst, pos, golds, attacks::goldAttacks, dstMask);
         }
 
-        void generateBishops(MoveList& dst, const Position& pos) {
+        void generateBishops(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto bishops = pos.pieceBb(PieceTypes::kBishop, pos.stm());
-            generatePrecalculatedWithOcc<true>(dst, pos, bishops, attacks::bishopAttacks);
+            generatePrecalculatedWithOcc<true>(dst, pos, bishops, attacks::bishopAttacks, dstMask);
         }
 
-        void generateRooks(MoveList& dst, const Position& pos) {
+        void generateRooks(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto rooks = pos.pieceBb(PieceTypes::kRook, pos.stm());
-            generatePrecalculatedWithOcc<true>(dst, pos, rooks, attacks::rookAttacks);
+            generatePrecalculatedWithOcc<true>(dst, pos, rooks, attacks::rookAttacks, dstMask);
         }
 
-        void generatePromotedBishops(MoveList& dst, const Position& pos) {
+        void generatePromotedBishops(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto horses = pos.pieceBb(PieceTypes::kPromotedBishop, pos.stm());
-            generatePrecalculatedWithOcc<false>(dst, pos, horses, attacks::promotedBishopAttacks);
+            generatePrecalculatedWithOcc<false>(dst, pos, horses, attacks::promotedBishopAttacks, dstMask);
         }
 
-        void generatePromotedRooks(MoveList& dst, const Position& pos) {
+        void generatePromotedRooks(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto dragons = pos.pieceBb(PieceTypes::kPromotedRook, pos.stm());
-            generatePrecalculatedWithOcc<false>(dst, pos, dragons, attacks::promotedRookAttacks);
+            generatePrecalculatedWithOcc<false>(dst, pos, dragons, attacks::promotedRookAttacks, dstMask);
         }
 
-        void generateKings(MoveList& dst, const Position& pos) {
+        void generateKings(MoveList& dst, const Position& pos, Bitboard dstMask) {
             const auto kings = pos.pieceBb(PieceTypes::kKing, pos.stm());
-            generatePrecalculated<false>(dst, pos, kings, attacks::kingAttacks);
+            generatePrecalculated<false>(dst, pos, kings, attacks::kingAttacks, dstMask);
         }
 
-        void generateDrops(MoveList& dst, const Position& pos) {
+        void generateDrops(MoveList& dst, const Position& pos, Bitboard dstMask) {
+            if (dstMask.empty()) {
+                return;
+            }
+
             const auto stm = pos.stm();
             const auto& hand = pos.hand(stm);
 
-            const auto empty = ~pos.occupancy() & Bitboards::kAll;
+            if (hand.empty()) {
+                return;
+            }
 
             const auto generate = [&](PieceType pt, Bitboard restriction = Bitboards::kAll) {
                 if (hand.count(pt) > 0) {
-                    const auto targets = empty & restriction;
+                    const auto targets = dstMask & restriction;
                     serializeDrops(dst, pt, targets);
                 }
             };
@@ -257,17 +272,34 @@ namespace stoat::movegen {
     } // namespace
 
     void generateAll(MoveList& dst, const Position& pos) {
-        generatePawns(dst, pos);
-        generateLances(dst, pos);
-        generateKnights(dst, pos);
-        generateSilvers(dst, pos);
-        generateGolds(dst, pos);
-        generateKings(dst, pos);
-        generateBishops(dst, pos);
-        generateRooks(dst, pos);
-        generatePromotedBishops(dst, pos);
-        generatePromotedRooks(dst, pos);
+        auto dstMask = ~pos.colorBb(pos.stm());
 
-        generateDrops(dst, pos);
+        generateKings(dst, pos, dstMask);
+
+        if (pos.checkers().multiple()) {
+            return;
+        }
+
+        auto dropMask = ~pos.occupancy();
+
+        if (!pos.checkers().empty()) {
+            const auto checker = pos.checkers().lsb();
+            const auto checkRay = rayBetween(pos.king(pos.stm()), checker);
+
+            dstMask &= checkRay | checker.bit();
+            dropMask &= checkRay;
+        }
+
+        generatePawns(dst, pos, dstMask);
+        generateLances(dst, pos, dstMask);
+        generateKnights(dst, pos, dstMask);
+        generateSilvers(dst, pos, dstMask);
+        generateGolds(dst, pos, dstMask);
+        generateBishops(dst, pos, dstMask);
+        generateRooks(dst, pos, dstMask);
+        generatePromotedBishops(dst, pos, dstMask);
+        generatePromotedRooks(dst, pos, dstMask);
+
+        generateDrops(dst, pos, dropMask);
     }
 } // namespace stoat::movegen

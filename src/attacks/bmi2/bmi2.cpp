@@ -21,7 +21,7 @@
 #if ST_HAS_FAST_PEXT
     #include "bmi2.h"
 
-namespace stoat::attacks::bmi2 {
+namespace stoat::attacks::sliders::bmi2 {
     namespace {
         template <const internal::PieceData& kData, i32... Dirs>
         std::array<Bitboard, kData.tableSize> generateAttacks() {
@@ -29,7 +29,7 @@ namespace stoat::attacks::bmi2 {
 
             for (i32 sqIdx = 0; sqIdx < Squares::kCount; ++sqIdx) {
                 const auto sq = Square::fromRaw(sqIdx);
-                const auto& sqData = kData.data[sq.idx()];
+                const auto& sqData = kData.squares[sq.idx()];
 
                 const auto entries = 1 << sqData.mask.popcount();
 
@@ -62,6 +62,6 @@ namespace stoat::attacks::bmi2 {
 
     const std::array<Bitboard, kRookData.tableSize> g_rookAttacks =
         generateAttacks<kRookData, offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>();
-} // namespace stoat::attacks::bmi2
+} // namespace stoat::attacks::sliders::bmi2
 
 #endif

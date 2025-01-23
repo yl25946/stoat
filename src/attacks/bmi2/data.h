@@ -24,7 +24,7 @@
 #include "../../core.h"
 #include "../util.h"
 
-namespace stoat::attacks::bmi2 {
+namespace stoat::attacks::sliders::bmi2 {
     namespace internal {
         struct SquareData {
             Bitboard mask;
@@ -33,7 +33,7 @@ namespace stoat::attacks::bmi2 {
         };
 
         struct PieceData {
-            std::array<SquareData, Squares::kCount> data;
+            std::array<SquareData, Squares::kCount> squares;
             u32 tableSize;
         };
 
@@ -43,7 +43,7 @@ namespace stoat::attacks::bmi2 {
 
             for (i32 sqIdx = 0; sqIdx < Squares::kCount; ++sqIdx) {
                 const auto sq = Square::fromRaw(sqIdx);
-                auto& sqData = dst.data[sq.idx()];
+                auto& sqData = dst.squares[sq.idx()];
 
                 for (const auto dir : {Dirs...}) {
                     const auto attacks = attacks::internal::generateSlidingAttacks(sq, dir, Bitboards::kEmpty);
@@ -80,4 +80,4 @@ namespace stoat::attacks::bmi2 {
 
     constexpr auto kRookData =
         internal::generatePieceData<offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>();
-} // namespace stoat::attacks::bmi2
+} // namespace stoat::attacks::sliders::bmi2

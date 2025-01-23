@@ -28,7 +28,7 @@
 #include "../../util/multi_array.h"
 #include "data.h"
 
-namespace stoat::attacks {
+namespace stoat::attacks::sliders {
     namespace bmi2 {
         extern const util::MultiArray<Bitboard, Colors::kCount, kLanceDataTableSize> g_lanceAttacks;
 
@@ -41,24 +41,24 @@ namespace stoat::attacks {
         extern const std::array<Bitboard, kRookData.tableSize> g_rookAttacks;
     } // namespace bmi2
 
-    [[nodiscard]] inline Bitboard lanceAttacks(Color c, Square sq, Bitboard occ) {
-        const auto& sqData = bmi2::lanceData(c).data[sq.idx()];
+    [[nodiscard]] inline Bitboard lanceAttacks(Square sq, Color c, Bitboard occ) {
+        const auto& sqData = bmi2::lanceData(c).squares[sq.idx()];
 
         const usize idx = util::pext(occ.raw(), sqData.mask.raw(), sqData.shift);
         return bmi2::lanceAttacks(c)[sqData.offset + idx];
     }
 
     [[nodiscard]] inline Bitboard bishopAttacks(Square sq, Bitboard occ) {
-        const auto& sqData = bmi2::kBishopData.data[sq.idx()];
+        const auto& sqData = bmi2::kBishopData.squares[sq.idx()];
 
         const usize idx = util::pext(occ.raw(), sqData.mask.raw(), sqData.shift);
         return bmi2::g_bishopAttacks[sqData.offset + idx];
     }
 
     [[nodiscard]] inline Bitboard rookAttacks(Square sq, Bitboard occ) {
-        const auto& sqData = bmi2::kRookData.data[sq.idx()];
+        const auto& sqData = bmi2::kRookData.squares[sq.idx()];
 
         const usize idx = util::pext(occ.raw(), sqData.mask.raw(), sqData.shift);
         return bmi2::g_rookAttacks[sqData.offset + idx];
     }
-} // namespace stoat::attacks
+} // namespace stoat::attacks::sliders

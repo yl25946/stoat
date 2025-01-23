@@ -111,6 +111,18 @@ namespace stoat {
             return m_hands[color.idx()];
         }
 
+        [[nodiscard]] inline bool isInCheck() const {
+            return !m_checkers.empty();
+        }
+
+        [[nodiscard]] inline Bitboard checkers() const {
+            return m_checkers;
+        }
+
+        [[nodiscard]] inline Bitboard pinned() const {
+            return m_pinned;
+        }
+
         [[nodiscard]] inline Color stm() const {
             return m_stm;
         }
@@ -124,7 +136,15 @@ namespace stoat {
             return pieceBb(PieceTypes::kKing, c).lsb();
         }
 
-        [[nodiscard]] bool isAttacked(Square sq, Color attacker) const;
+        [[nodiscard]] bool isLegal(Move move) const;
+
+        [[nodiscard]] bool isAttacked(Square sq, Color attacker, Bitboard occ) const;
+
+        [[nodiscard]] bool isAttacked(Square sq, Color attacker) const {
+            return isAttacked(sq, attacker, occupancy());
+        }
+
+        [[nodiscard]] Bitboard attackersTo(Square sq, Color attacker) const;
 
         [[nodiscard]] std::string sfen() const;
 
@@ -148,6 +168,9 @@ namespace stoat {
 
         std::array<Hand, Colors::kCount> m_hands{};
 
+        Bitboard m_checkers{};
+        Bitboard m_pinned{};
+
         Color m_stm{Colors::kBlack};
 
         u16 m_moveCount{1};
@@ -155,6 +178,8 @@ namespace stoat {
         void addPiece(Square square, Piece piece);
         void movePiece(Square from, Square to, Piece piece);
         void promotePiece(Square from, Square to, Piece piece);
+
+        void updateAttacks();
 
         void regen();
     };

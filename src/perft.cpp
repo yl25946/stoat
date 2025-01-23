@@ -34,13 +34,16 @@ namespace stoat {
             usize total{};
 
             for (const auto move : moves) {
-                const auto newPos = pos.applyMove(move);
-
-                if (newPos.isAttacked(newPos.king(pos.stm()), newPos.stm())) {
+                if (!pos.isLegal(move)) {
                     continue;
                 }
 
-                total += doPerft(newPos, depth - 1);
+                if (depth == 1) {
+                    ++total;
+                } else {
+                    const auto newPos = pos.applyMove(move);
+                    total += doPerft(newPos, depth - 1);
+                }
             }
 
             return total;
@@ -60,12 +63,11 @@ namespace stoat {
         usize total{};
 
         for (const auto move : moves) {
-            const auto newPos = pos.applyMove(move);
-
-            if (newPos.isAttacked(newPos.king(pos.stm()), newPos.stm())) {
+            if (!pos.isLegal(move)) {
                 continue;
             }
 
+            const auto newPos = pos.applyMove(move);
             const auto value = doPerft(newPos, depth - 1);
 
             total += value;

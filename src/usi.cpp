@@ -161,7 +161,24 @@ namespace stoat::usi {
 
         void UsiHandler::handle_d([[maybe_unused]] std::span<std::string_view> args) {
             std::cout << '\n' << m_pos;
-            std::cout << "\n\nSfen: " << m_pos.sfen() << std::endl;
+
+            std::cout << "\n\nSfen: " << m_pos.sfen();
+
+            std::cout << "\nCheckers:";
+
+            auto checkers = m_pos.checkers();
+            while (!checkers.empty()) {
+                std::cout << ' ' << checkers.popLsb();
+            }
+
+            std::cout << "\nPinned:";
+
+            auto pinned = m_pos.pinned();
+            while (!pinned.empty()) {
+                std::cout << ' ' << pinned.popLsb();
+            }
+
+            std::cout << std::endl;
         }
 
         void UsiHandler::handle_splitperft(std::span<std::string_view> args) {

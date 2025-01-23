@@ -137,7 +137,7 @@ namespace stoat {
         }
 
         [[nodiscard]] constexpr Bitboard operator~() const {
-            return Bitboard{~m_bb};
+            return Bitboard{~m_bb & kAll};
         }
 
         [[nodiscard]] constexpr Bitboard operator<<(i32 rhs) const {
@@ -196,6 +196,14 @@ namespace stoat {
 
         [[nodiscard]] constexpr bool empty() const {
             return m_bb == 0;
+        }
+
+        [[nodiscard]] constexpr bool multiple() const {
+            return (m_bb & (m_bb - 1)) != 0;
+        }
+
+        [[nodiscard]] constexpr bool one() const {
+            return !empty() && !multiple();
         }
 
         [[nodiscard]] constexpr Square lsb() const {

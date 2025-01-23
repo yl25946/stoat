@@ -18,9 +18,12 @@
 
 #include "position.h"
 
+#include <algorithm>
 #include <sstream>
 
 #include "attacks/attacks.h"
+#include "movegen.h"
+#include "rays.h"
 #include "util/parse.h"
 #include "util/split.h"
 
@@ -212,10 +215,89 @@ namespace stoat {
         ++newPos.m_moveCount;
         newPos.m_stm = newPos.m_stm.flip();
 
+        newPos.updateAttacks();
+
         return newPos;
     }
 
-    bool Position::isAttacked(Square sq, Color attacker) const {
+    bool Position::isLegal(Move move) const {
+        assert(!move.isNull());
+
+        const auto stm = this->stm();
+        const auto nstm = this->stm().flip();
+
+        const auto stmKing = king(stm);
+
+        if (move.isDrop()) {
+            if (isInCheck()) {
+                // multiple checks can only be evaded with a king move
+                if (m_checkers.multiple()) {
+                    return false;
+                }
+
+                const auto checker = m_checkers.lsb();
+                const auto checkRay = rayBetween(stmKing, checker);
+
+                // a drop must block the check
+                if (!checkRay.getSquare(move.to())) {
+                    return false;
+                }
+            }
+
+            // pawn drop mate rule (delivering mate by dropping a pawn is illegal)
+            if (move.dropPiece() == PieceTypes::kPawn) {
+                const auto dropBb = Bitboard::fromSquare(move.to());
+                if (!(dropBb.shiftNorthRelative(stm) & pieceBb(PieceTypes::kKing, nstm)).empty()) {
+                    // this pawn drop gives check - ensure it's not mate
+                    // slow and cursed, but rare
+                    const auto newPos = applyMove(move);
+
+                    assert(newPos.checkers().one());
+                    assert(newPos.checkers().getSquare(move.to()));
+
+                    movegen::MoveList newMoves{};
+                    movegen::generateAll(newMoves, newPos);
+
+                    return std::ranges::any_of(newMoves, [&](Move newMove) { return newPos.isLegal(newMove); });
+                }
+            }
+
+            // impossible to put yourself in check by dropping a piece, no cannons here
+            return true;
+        }
+
+        if (pieceOn(move.from()).type() == PieceTypes::kKing) {
+            // remove the king to account for moving away from the checker
+            const auto kinglessOcc = occupancy() ^ pieceBb(PieceTypes::kKing, stm);
+            return !isAttacked(move.to(), nstm, kinglessOcc);
+        } else if (m_checkers.multiple()) {
+            // multiple checks can only be evaded with a king move
+            return false;
+        }
+
+        if (m_pinned.getSquare(move.from())) {
+            const auto pinRay = rayIntersecting(move.from(), stmKing);
+            if (!pinRay.getSquare(move.to())) {
+                return false;
+            }
+        }
+
+        if (isInCheck()) {
+            const auto checker = m_checkers.lsb();
+            // includes the checker
+            const auto checkRay = rayBetween(stmKing, checker) | checker.bit();
+
+            // must either block the check or capture the checker
+            if (!checkRay.getSquare(move.to())) {
+                return false;
+            }
+        }
+
+        // :3
+        return true;
+    }
+
+    bool Position::isAttacked(Square sq, Color attacker, Bitboard occ) const {
         assert(sq);
         assert(attacker);
 
@@ -226,18 +308,18 @@ namespace stoat {
 
         const auto rooks = dragons | pieceBb(PieceTypes::kRook, attacker);
 
-        if (const auto pawns = pieceBb(PieceTypes::kPawn, attacker); !(pawns & attacks::pawnAttacks(c, sq)).empty()) {
+        if (const auto pawns = pieceBb(PieceTypes::kPawn, attacker); !(pawns & attacks::pawnAttacks(sq, c)).empty()) {
             return true;
         }
 
         if (const auto knights = pieceBb(PieceTypes::kKnight, attacker);
-            !(knights & attacks::knightAttacks(c, sq)).empty())
+            !(knights & attacks::knightAttacks(sq, c)).empty())
         {
             return true;
         }
 
         if (const auto silvers = pieceBb(PieceTypes::kSilver, attacker);
-            !(silvers & attacks::silverAttacks(c, sq)).empty())
+            !(silvers & attacks::silverAttacks(sq, c)).empty())
         {
             return true;
         }
@@ -246,7 +328,7 @@ namespace stoat {
                              | pieceBb(PieceTypes::kPromotedLance, attacker)
                              | pieceBb(PieceTypes::kPromotedKnight, attacker)
                              | pieceBb(PieceTypes::kPromotedSilver, attacker);
-            !(golds & attacks::goldAttacks(c, sq)).empty())
+            !(golds & attacks::goldAttacks(sq, c)).empty())
         {
             return true;
         }
@@ -257,10 +339,8 @@ namespace stoat {
             return true;
         }
 
-        const auto occ = occupancy();
-
         if (const auto lances = rooks | pieceBb(PieceTypes::kLance, attacker);
-            !(lances & attacks::lanceAttacks(c, sq, occ)).empty())
+            !(lances & attacks::lanceAttacks(sq, c, occ)).empty())
         {
             return true;
         }
@@ -276,6 +356,48 @@ namespace stoat {
         }
 
         return false;
+    }
+
+    Bitboard Position::attackersTo(Square sq, Color attacker) const {
+        assert(sq);
+        assert(attacker);
+
+        const auto defender = attacker.flip();
+        const auto occ = occupancy();
+
+        Bitboard attackers{};
+
+        const auto horses = pieceBb(PieceTypes::kPromotedBishop, attacker);
+        const auto dragons = pieceBb(PieceTypes::kPromotedRook, attacker);
+
+        const auto pawns = pieceBb(PieceTypes::kPawn, attacker);
+        attackers |= pawns & attacks::pawnAttacks(sq, defender);
+
+        const auto lances = pieceBb(PieceTypes::kLance, attacker);
+        attackers |= lances & attacks::lanceAttacks(sq, defender, occ);
+
+        const auto knights = pieceBb(PieceTypes::kKnight, attacker);
+        attackers |= knights & attacks::knightAttacks(sq, defender);
+
+        const auto silvers = pieceBb(PieceTypes::kSilver, attacker);
+        attackers |= silvers & attacks::silverAttacks(sq, defender);
+
+        const auto golds = pieceBb(PieceTypes::kGold, attacker) | pieceBb(PieceTypes::kPromotedPawn, attacker)
+                         | pieceBb(PieceTypes::kPromotedLance, attacker)
+                         | pieceBb(PieceTypes::kPromotedKnight, attacker)
+                         | pieceBb(PieceTypes::kPromotedSilver, attacker);
+        attackers |= golds & attacks::goldAttacks(sq, defender);
+
+        const auto bishops = horses | pieceBb(PieceTypes::kBishop, attacker);
+        attackers |= bishops & attacks::bishopAttacks(sq, occ);
+
+        const auto rooks = dragons | pieceBb(PieceTypes::kRook, attacker);
+        attackers |= rooks & attacks::rookAttacks(sq, occ);
+
+        const auto kings = horses | dragons | pieceBb(PieceTypes::kKing, attacker);
+        attackers |= kings & attacks::kingAttacks(sq);
+
+        return attackers;
     }
 
     std::string Position::sfen() const {
@@ -386,6 +508,35 @@ namespace stoat {
         m_mailbox[to.idx()] = promoted;
     }
 
+    void Position::updateAttacks() {
+        const auto stm = this->stm();
+        const auto nstm = this->stm().flip();
+
+        m_checkers = attackersTo(king(stm), nstm);
+        m_pinned = Bitboards::kEmpty;
+
+        const auto stmKing = king(stm);
+
+        const auto stmOcc = colorBb(stm);
+        const auto nstmOcc = colorBb(nstm);
+
+        const auto nstmLances = pieceBb(PieceTypes::kLance, nstm);
+        const auto nstmBishops = pieceBb(PieceTypes::kBishop, nstm) | pieceBb(PieceTypes::kPromotedBishop, nstm);
+        const auto nstmRooks = pieceBb(PieceTypes::kRook, nstm) | pieceBb(PieceTypes::kPromotedRook, nstm);
+
+        auto potentialAttackers = (attacks::lanceAttacks(stmKing, stm, nstmOcc) & nstmLances)
+                                | (attacks::bishopAttacks(stmKing, nstmOcc) & nstmBishops)
+                                | (attacks::rookAttacks(stmKing, nstmOcc) & nstmRooks);
+        while (!potentialAttackers.empty()) {
+            const auto potentialAttacker = potentialAttackers.popLsb();
+            const auto maybePinned = stmOcc & rayBetween(potentialAttacker, stmKing);
+
+            if (maybePinned.one()) {
+                m_pinned |= maybePinned;
+            }
+        }
+    }
+
     void Position::regen() {
         m_mailbox.fill(Pieces::kNone);
 
@@ -399,6 +550,8 @@ namespace stoat {
                 m_mailbox[sq.idx()] = piece;
             }
         }
+
+        updateAttacks();
     }
 
     Position Position::startpos() {
@@ -521,6 +674,8 @@ namespace stoat {
         if (sfen.size() == 4 && !util::tryParse(pos.m_moveCount, sfen[3])) {
             return util::err<SfenError>("invalid move count " + std::string{sfen[3]});
         }
+
+        pos.updateAttacks();
 
         return util::ok(pos);
     }
