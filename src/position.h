@@ -83,6 +83,12 @@ namespace stoat {
         [[nodiscard]] bool operator==(const PositionKeys&) const = default;
     };
 
+    enum class SennichiteStatus {
+        None = 0,
+        Draw,
+        Win, // perpetual check by opponent
+    };
+
     class Position {
     public:
         Position();
@@ -156,6 +162,8 @@ namespace stoat {
             return pieceBb(PieceTypes::kKing, c).lsb();
         }
 
+        [[nodiscard]] SennichiteStatus testSennichite(std::span<const u64> keyHistory, i32 limit = 16) const;
+
         [[nodiscard]] bool isLegal(Move move) const;
 
         [[nodiscard]] bool isAttacked(Square sq, Color attacker, Bitboard occ) const;
@@ -189,6 +197,8 @@ namespace stoat {
         std::array<Piece, Squares::kCount> m_mailbox{};
 
         std::array<Hand, Colors::kCount> m_hands{};
+
+        std::array<u16, Colors::kCount> m_consecutiveChecks{};
 
         PositionKeys m_keys{};
 

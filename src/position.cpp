@@ -254,7 +254,30 @@ namespace stoat {
 
         newPos.updateAttacks();
 
+        if (newPos.isInCheck()) {
+            ++newPos.m_consecutiveChecks[newPos.stm().idx()];
+        } else {
+            newPos.m_consecutiveChecks[newPos.stm().idx()] = 0;
+        }
+
         return newPos;
+    }
+
+    SennichiteStatus Position::testSennichite(std::span<const u64> keyHistory, i32 limit) const {
+        const auto end = std::max(0, static_cast<i32>(keyHistory.size()) - limit - 1);
+
+        i32 repetitions = 1;
+
+        for (i32 i = static_cast<i32>(keyHistory.size()) - 4; i >= end; i -= 2) {
+            if (keyHistory[i] == key()) {
+                ++repetitions;
+                if (repetitions == 4) {
+                    return m_consecutiveChecks[stm().idx()] >= 4 ? SennichiteStatus::Win : SennichiteStatus::Draw;
+                }
+            }
+        }
+
+        return SennichiteStatus::None;
     }
 
     // Assumes moves are pseudolegal
@@ -771,6 +794,10 @@ namespace stoat {
 
         pos.regenKey();
         pos.updateAttacks();
+
+        if (pos.isInCheck()) {
+            pos.m_consecutiveChecks[pos.stm().idx()] = 1;
+        }
 
         return util::ok(pos);
     }

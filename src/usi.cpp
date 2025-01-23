@@ -50,6 +50,7 @@ namespace stoat::usi {
             util::UnorderedStringMap<CommandHandlerType> m_handlers{};
 
             Position m_pos{Position::startpos()};
+            std::vector<u64> m_keyHistory{};
 
             void handle_usi(std::span<std::string_view> args);
             void handle_usinewgame(std::span<std::string_view> args);
@@ -125,6 +126,8 @@ namespace stoat::usi {
 
             if (args[0] == "startpos") {
                 m_pos = Position::startpos();
+                m_keyHistory.clear();
+
                 next = 1;
             } else if (args[0] == "sfen") {
                 if (args.size() == 1) {
@@ -135,6 +138,7 @@ namespace stoat::usi {
                 const auto count = std::distance(args.begin(), std::ranges::find(args, "moves")) - 1;
                 if (auto parsed = Position::fromSfenParts(args.subspan(1, count))) {
                     m_pos = parsed.take();
+                    m_keyHistory.clear();
                 } else {
                     std::cerr << "Failed to parse sfen: " << parsed.takeErr().message() << std::endl;
                     return;
@@ -153,6 +157,7 @@ namespace stoat::usi {
                 auto parsedMove = Move::fromStr(args[i]);
 
                 if (parsedMove) {
+                    m_keyHistory.push_back(m_pos.key());
                     m_pos = m_pos.applyMove(parsedMove.take());
                 } else {
                     std::cerr << "Invalid move '" << args[i] << "'" << std::endl;
