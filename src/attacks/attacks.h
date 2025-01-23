@@ -26,10 +26,15 @@
 #include "../core.h"
 #include "../util/multi_array.h"
 
+#if ST_HAS_FAST_PEXT
+    #include "bmi2/bmi2.h"
+#else
+    #error non-BMI2 attack generator not yet implemented
+#endif
+
 namespace stoat::attacks {
     namespace tables {
-        template <typename F>
-        consteval std::array<Bitboard, Squares::kCount> generateAttacks(F func) {
+        consteval std::array<Bitboard, Squares::kCount> generateAttacks(auto func) {
             std::array<Bitboard, Squares::kCount> attacks{};
 
             for (i32 idx = 0; idx < Squares::kCount; ++idx) {
@@ -40,8 +45,7 @@ namespace stoat::attacks {
             return attacks;
         }
 
-        template <typename F>
-        consteval std::array<std::array<Bitboard, Squares::kCount>, 2> generateSidedAttacks(F func) {
+        consteval std::array<std::array<Bitboard, Squares::kCount>, 2> generateSidedAttacks(auto func) {
             util::MultiArray<Bitboard, 2, Squares::kCount> attacks{};
 
             attacks[Colors::kBlack.idx()] =
@@ -127,6 +131,7 @@ namespace stoat::attacks {
     }
 
     [[nodiscard]] inline Bitboard kingAttacks(Square sq) {
+        assert(sq);
         return tables::kKingAttacks[sq.idx()];
     }
 } // namespace stoat::attacks

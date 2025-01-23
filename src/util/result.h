@@ -146,8 +146,7 @@ namespace stoat::util {
             return v;
         }
 
-        template <typename FT, typename FE>
-        void consume(FT okFunc, FE errFunc) {
+        void consume(auto okFunc, auto errFunc) {
             if (empty()) {
                 throw BadResultException{"Attempted to consume an empty Result"};
             }

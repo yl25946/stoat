@@ -20,8 +20,60 @@
 
 #include "../types.h"
 
+#include <bit>
+
+#include "../arch.h"
+
+#if ST_HAS_FAST_PEXT
+    #include <immintrin.h>
+#endif
+
 namespace stoat::util {
-    [[nodiscard]] inline i32 ctz(u128 v) {
+    namespace fallback {
+        [[nodiscard]] constexpr i32 ctz(u128 v) {
+            i32 count{};
+
+            for (u128 bit = 1; bit != 0 && (v & bit) == 0; bit <<= 1) {
+                ++count;
+            }
+
+            return count;
+        }
+
+        [[nodiscard]] constexpr u128 pext(u128 v, u128 mask) {
+            u128 dst{};
+
+            for (u128 bit = 1; mask != 0; bit <<= 1) {
+                if ((v & mask & -mask) != 0) {
+                    dst |= bit;
+                }
+
+                mask &= mask - 1;
+            }
+
+            return dst;
+        }
+
+        [[nodiscard]] constexpr u128 pdep(u128 v, u128 mask) {
+            u128 dst{};
+
+            for (u128 bit = 1; mask != 0; bit <<= 1) {
+                if ((v & bit) != 0) {
+                    dst |= mask & -mask;
+                }
+
+                mask &= mask - 1;
+            }
+
+            return dst;
+        }
+    } // namespace fallback
+
+    [[nodiscard]] constexpr i32 ctz(u128 v) {
+        if (std::is_constant_evaluated()) {
+            return fallback::ctz(v);
+        }
+
         const u64 low = v;
         const u64 high = v >> 64;
 
@@ -32,10 +84,64 @@ namespace stoat::util {
         }
     }
 
-    [[nodiscard]] inline i32 popcount(u128 v) {
+    [[nodiscard]] constexpr i32 popcount(u128 v) {
         const u64 low = v;
         const u64 high = v >> 64;
 
-        return __builtin_popcountll(low) + __builtin_popcountll(high);
+        return std::popcount(low) + std::popcount(high);
+    }
+
+    [[nodiscard]] constexpr u128 pext(u128 v, u128 mask, i32 shift) {
+#if ST_HAS_FAST_PEXT
+        if (std::is_constant_evaluated()) {
+            return fallback::pext(v, mask);
+        }
+
+        const u64 vLow = v;
+        const u64 vHigh = v >> 64;
+
+        const u64 maskLow = mask;
+        const u64 maskHigh = mask >> 64;
+
+        assert(shift == std::popcount(maskLow));
+
+        const auto low = _pext_u64(vLow, maskLow);
+        const auto high = _pext_u64(vHigh, maskHigh);
+
+        return (u128{high} << shift) | u128{low};
+#else
+        return fallback::pext(v, mask);
+#endif
+    }
+
+    [[nodiscard]] constexpr u128 pext(u128 v, u128 mask) {
+        return pext(v, mask, std::popcount(static_cast<u64>(mask)));
+    }
+
+    [[nodiscard]] constexpr u128 pdep(u128 v, u128 mask, i32 shift) {
+#if ST_HAS_FAST_PEXT
+        if (std::is_constant_evaluated()) {
+            return fallback::pdep(v, mask);
+        }
+
+        const u64 vLow = v;
+        const u64 vHigh = v >> shift;
+
+        const u64 maskLow = mask;
+        const u64 maskHigh = mask >> 64;
+
+        assert(shift == std::popcount(maskLow));
+
+        const auto low = _pdep_u64(vLow, maskLow);
+        const auto high = _pdep_u64(vHigh, maskHigh);
+
+        return (u128{high} << 64) | u128{low};
+#else
+        return fallback::pext(v, mask);
+#endif
+    }
+
+    [[nodiscard]] constexpr u128 pdep(u128 v, u128 mask) {
+        return pdep(v, mask, std::popcount(static_cast<u64>(mask)));
     }
 } // namespace stoat::util
