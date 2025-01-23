@@ -32,6 +32,9 @@
 #include "util/split.h"
 #include "util/string_map.h"
 
+#include "movegen.h"
+#include "util/rng.h"
+
 namespace stoat::usi {
     namespace {
         constexpr std::string_view kName = "Stoat";
@@ -52,10 +55,13 @@ namespace stoat::usi {
             Position m_pos{Position::startpos()};
             std::vector<u64> m_keyHistory{};
 
+            util::rng::Jsf64Rng m_rng{util::rng::generateSingleSeed()};
+
             void handle_usi(std::span<std::string_view> args);
             void handle_usinewgame(std::span<std::string_view> args);
             void handle_isready(std::span<std::string_view> args);
             void handle_position(std::span<std::string_view> args);
+            void handle_go(std::span<std::string_view> args);
 
             // nonstandard
             void handle_d(std::span<std::string_view> args);
@@ -69,6 +75,7 @@ namespace stoat::usi {
             REGISTER_HANDLER(usinewgame);
             REGISTER_HANDLER(isready);
             REGISTER_HANDLER(position);
+            REGISTER_HANDLER(go);
 
             REGISTER_HANDLER(d);
             REGISTER_HANDLER(splitperft);
@@ -162,6 +169,35 @@ namespace stoat::usi {
                 } else {
                     std::cerr << "Invalid move '" << args[i] << "'" << std::endl;
                     break;
+                }
+            }
+        }
+
+        void UsiHandler::handle_go(std::span<std::string_view> args) {
+            movegen::MoveList moves{};
+            movegen::generateAll(moves, m_pos);
+
+            u32 start = 0;
+
+            while (true) {
+                const auto idx = m_rng.nextU32(moves.size() - start);
+                const auto move = moves[start + idx];
+
+                if (m_pos.isLegal(move)) {
+                    m_keyHistory.push_back(m_pos.key());
+                    const auto newPos = m_pos.applyMove(move);
+                    const auto sennichite = newPos.testSennichite(m_keyHistory);
+                    m_keyHistory.pop_back();
+
+                    // avoid accidental perpetual
+                    if (sennichite != SennichiteStatus::Win) {
+                        std::cout << "info depth 1 seldepth 1 time 0 nodes 1 nps 1 score cp 0 pv " << move << std::endl;
+                        std::cout << "bestmove " << move << std::endl;
+                        break;
+                    }
+                } else {
+                    std::swap(moves[start], moves[idx]);
+                    ++start;
                 }
             }
         }
