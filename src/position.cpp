@@ -220,6 +220,8 @@ namespace stoat {
         return newPos;
     }
 
+    // Assumes moves are pseudolegal
+    //TODO detect perpetual check
     bool Position::isLegal(Move move) const {
         assert(!move.isNull());
 

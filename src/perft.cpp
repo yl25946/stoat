@@ -71,7 +71,7 @@ namespace stoat {
             const auto value = doPerft(newPos, depth - 1);
 
             total += value;
-            std::cout << move << " : " << value << '\n';
+            std::cout << move << '\t' << value << '\n';
         }
 
         const auto nps = static_cast<usize>(static_cast<f64>(total) / start.elapsed());
