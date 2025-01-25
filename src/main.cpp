@@ -16,10 +16,54 @@
  * along with Stoat. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "usi.h"
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "protocol/handler.h"
+#include "util/split.h"
 
 using namespace stoat;
 
 i32 main() {
-    return usi::run();
+    protocol::EngineState state{};
+
+    std::string_view currHandler = protocol::kDefaultHandler;
+    auto handler = protocol::createHandler(currHandler, state);
+
+    std::vector<std::string_view> tokens{};
+
+    std::string line{};
+    while (std::getline(std::cin, line)) {
+        tokens.clear();
+        util::split(tokens, line);
+
+        if (tokens.empty()) {
+            continue;
+        }
+
+        const auto command = tokens[0];
+        const auto args = std::span{tokens}.subspan<1>();
+
+        if (command == currHandler) {
+            handler->printInitialInfo();
+            continue;
+        }
+
+        const auto result = handler->handleCommand(command, args);
+
+        if (result == protocol::CommandResult::Quit) {
+            break;
+        } else if (result == protocol::CommandResult::Unknown) {
+            if (auto newHandler = protocol::createHandler(command, state)) {
+                currHandler = command;
+                handler = std::move(newHandler);
+
+                handler->printInitialInfo();
+            } else {
+                std::cerr << "Unknown command '" << command << "'" << std::endl;
+            }
+        }
+    }
 }

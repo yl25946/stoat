@@ -18,8 +18,12 @@
 
 #pragma once
 
-#include "types.h"
+#include "../types.h"
 
-namespace stoat::usi {
-    i32 run();
-}
+#include <string_view>
+
+namespace stoat::protocol {
+    constexpr std::string_view kName = "Stoat";
+    constexpr std::string_view kVersion = ST_STRINGIFY(ST_VERSION);
+    constexpr std::string_view kAuthor = "Ciekce";
+} // namespace stoat::protocol

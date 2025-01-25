@@ -20,6 +20,7 @@
 
 #include "../types.h"
 
+#include <concepts>
 #include <stdexcept>
 #include <variant>
 
@@ -94,6 +95,12 @@ namespace stoat::util {
     template <typename T, typename E>
     class Result {
     public:
+        Result(const Result&) = delete;
+
+        Result(Result&& other) noexcept {
+            *this = std::move(other);
+        }
+
         Result(OkHelper<T> v) : // NOLINT(google-explicit-constructor)
                 m_value{std::move(v.value())} {}
 
@@ -158,6 +165,64 @@ namespace stoat::util {
             }
         }
 
+        template <typename M>
+            requires std::convertible_to<T, M>
+        [[nodiscard]] Result<M, E> mapOk() {
+            if (ok()) {
+                return Result<M, E>::ofOk(take());
+            } else if (err()) {
+                return Result<M, E>::ofErr(takeErr());
+            } else {
+                return Result<M, E>{Result<M, E>::kEmpty};
+            }
+        }
+
+        template <typename M>
+        [[nodiscard]] Result<M, E> mapOk(auto func) {
+            if (ok()) {
+                return Result<M, E>::ofOk(func(take()));
+            } else if (err()) {
+                return Result<M, E>::ofErr(takeErr());
+            } else {
+                return Result<M, E>{Result<M, E>::kEmpty};
+            }
+        }
+
+        template <typename M>
+            requires std::convertible_to<E, M>
+        [[nodiscard]] Result<T, M> mapErr() {
+            if (ok()) {
+                return Result<T, M>::ofOk(take());
+            } else if (err()) {
+                return Result<T, M>::ofErr(takeErr());
+            } else {
+                return Result<T, M>{Result<T, M>::kEmpty};
+            }
+        }
+
+        template <typename M>
+        [[nodiscard]] Result<T, M> mapErr(auto func) {
+            if (ok()) {
+                return Result<T, M>::ofOk(take());
+            } else if (err()) {
+                return Result<T, M>::ofErr(func(takeErr()));
+            } else {
+                return Result<T, M>{Result<T, M>::kEmpty};
+            }
+        }
+
+        Result<T, E>& operator=(const Result<T, E>&) = delete;
+
+        Result<T, E>& operator=(Result<T, E>&& other) noexcept {
+            if (other.ok()) {
+                m_value = other.take();
+            } else if (other.err()) {
+                m_value = ErrContainer{other.takeErr()};
+            } else {
+                m_value = kEmpty;
+            }
+        }
+
     private:
         struct ErrTagType {};
         static constexpr ErrTagType kErrTag{};
@@ -173,6 +238,9 @@ namespace stoat::util {
         struct EmptyType {};
         static constexpr EmptyType kEmpty{};
 
+        explicit constexpr Result(EmptyType) :
+                m_value{kEmpty} {}
+
         template <typename... Args>
         explicit constexpr Result(Args&&... args) :
                 m_value{std::in_place_type<T>, std::forward<Args>(args)...} {};
@@ -182,5 +250,8 @@ namespace stoat::util {
                 m_value{std::in_place_type<ErrContainer>, std::forward<Args>(args)...} {};
 
         std::variant<T, ErrContainer, EmptyType> m_value;
+
+        template <typename OT, typename OE>
+        friend class Result;
     };
 } // namespace stoat::util

@@ -1,0 +1,81 @@
+/*
+ * Stoat, a USI shogi engine
+ * Copyright (C) 2025 Ciekce
+ *
+ * Stoat is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Stoat is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Stoat. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "../types.h"
+
+#include <functional>
+#include <optional>
+#include <string>
+#include <utility>
+
+#include "../util/result.h"
+#include "../util/string_map.h"
+#include "handler.h"
+
+#include "../util/rng.h"
+
+namespace stoat::protocol {
+    class UciLikeHandler : public IProtocolHandler {
+    public:
+        explicit UciLikeHandler(EngineState& state);
+        ~UciLikeHandler() override = default;
+
+        void printInitialInfo() const final;
+
+        [[nodiscard]] CommandResult handleCommand(std::string_view command, std::span<std::string_view> args) final;
+
+        void printSearchInfo(i32 depth, i32 seldepth, f64 timeSec, usize nodes, DisplayScore score, const PvList& pv)
+            const final;
+        void printInfoString(std::string_view str) const final;
+        void printBestMove(Move move) const final;
+
+    protected:
+        using CommandHandlerType = std::function<void(std::span<std::string_view>)>;
+        void registerCommandHandler(std::string_view command, CommandHandlerType handler);
+
+        void handleNewGame();
+
+        virtual void finishInitialInfo() const = 0;
+
+        virtual util::Result<Position, std::optional<std::string>> parsePosition(std::span<std::string_view> args) = 0;
+        virtual util::Result<Move, InvalidMoveError> parseMove(std::string_view str) = 0;
+
+        virtual void printFen(const Position& pos) const = 0;
+        virtual void printMove(Move move) const = 0;
+
+        // ech
+        virtual void printFenLine(const Position& pos) const = 0;
+
+    private:
+        util::UnorderedStringMap<CommandHandlerType> m_cmdHandlers{};
+
+        EngineState& m_state;
+
+        util::rng::Jsf64Rng m_rng{util::rng::generateSingleSeed()};
+
+        void handle_isready(std::span<std::string_view> args);
+        void handle_position(std::span<std::string_view> args);
+        void handle_go(std::span<std::string_view> args);
+
+        // nonstandard
+        void handle_d(std::span<std::string_view> args);
+        void handle_splitperft(std::span<std::string_view> args);
+    };
+} // namespace stoat::protocol

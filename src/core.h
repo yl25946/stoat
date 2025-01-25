@@ -20,6 +20,7 @@
 
 #include "types.h"
 
+#include <array>
 #include <bit>
 #include <cassert>
 #include <iostream>
@@ -821,4 +822,16 @@ namespace stoat {
         PieceTypes::kBishop,
         PieceTypes::kRook,
     };
+
+    using Score = i32;
+
+    constexpr auto kScoreInf = 32767;
+    constexpr auto kScoreMate = 32766;
+    constexpr auto kScoreWin = 25000;
+
+    constexpr auto kScoreNone = -kScoreInf;
+
+    constexpr i32 kMaxDepth = 255;
+
+    constexpr auto ScoreMaxMate = kScoreMate - kMaxDepth;
 } // namespace stoat
