@@ -23,10 +23,10 @@
 #include "uci_like.h"
 
 namespace stoat::protocol {
-    class UsiHandler : public UciLikeHandler {
+    class UciHandler : public UciLikeHandler {
     public:
-        explicit UsiHandler(EngineState& state);
-        ~UsiHandler() override = default;
+        explicit UciHandler(EngineState& state);
+        ~UciHandler() override = default;
 
         void finishInitialInfo() const final;
 

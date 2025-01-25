@@ -41,10 +41,9 @@ namespace stoat::protocol {
 
         [[nodiscard]] CommandResult handleCommand(std::string_view command, std::span<std::string_view> args) final;
 
-        void printSearchInfo(i32 depth, i32 seldepth, f64 timeSec, usize nodes, DisplayScore score, const PvList& pv)
-            const final;
-        void printInfoString(std::string_view str) const final;
-        void printBestMove(Move move) const final;
+        void printSearchInfo(std::ostream& stream, const SearchInfo& info) const final;
+        void printInfoString(std::ostream& stream, std::string_view str) const final;
+        void printBestMove(std::ostream& stream, Move move) const final;
 
     protected:
         using CommandHandlerType = std::function<void(std::span<std::string_view>)>;
@@ -57,11 +56,12 @@ namespace stoat::protocol {
         virtual util::Result<Position, std::optional<std::string>> parsePosition(std::span<std::string_view> args) = 0;
         virtual util::Result<Move, InvalidMoveError> parseMove(std::string_view str) = 0;
 
-        virtual void printFen(const Position& pos) const = 0;
-        virtual void printMove(Move move) const = 0;
+        virtual void printBoard(std::ostream& stream, const Position& pos) const = 0;
+        virtual void printFen(std::ostream& stream, const Position& pos) const = 0;
+        virtual void printMove(std::ostream& stream, Move move) const = 0;
 
         // ech
-        virtual void printFenLine(const Position& pos) const = 0;
+        virtual void printFenLine(std::ostream& stream, const Position& pos) const = 0;
 
     private:
         util::UnorderedStringMap<CommandHandlerType> m_cmdHandlers{};

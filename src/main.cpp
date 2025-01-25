@@ -29,7 +29,7 @@ using namespace stoat;
 i32 main() {
     protocol::EngineState state{};
 
-    std::string_view currHandler = protocol::kDefaultHandler;
+    std::string currHandler{protocol::kDefaultHandler};
     auto handler = protocol::createHandler(currHandler, state);
 
     std::vector<std::string_view> tokens{};

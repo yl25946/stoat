@@ -19,7 +19,6 @@
 #include "usi.h"
 
 #include <cassert>
-#include <iostream>
 
 namespace stoat::protocol {
     UsiHandler::UsiHandler(EngineState& state) :
@@ -51,15 +50,19 @@ namespace stoat::protocol {
         return Move::fromStr(str);
     }
 
-    void UsiHandler::printFen(const Position& pos) const {
-        std::cout << pos.sfen();
+    void UsiHandler::printBoard(std::ostream& stream, const Position& pos) const {
+        stream << pos;
     }
 
-    void UsiHandler::printMove(Move move) const {
-        std::cout << move;
+    void UsiHandler::printFen(std::ostream& stream, const Position& pos) const {
+        stream << pos.sfen();
     }
 
-    void UsiHandler::printFenLine(const Position& pos) const {
-        std::cout << "Sfen: " << pos.sfen() << '\n';
+    void UsiHandler::printMove(std::ostream& stream, Move move) const {
+        stream << move;
+    }
+
+    void UsiHandler::printFenLine(std::ostream& stream, const Position& pos) const {
+        stream << "Sfen: " << pos.sfen() << '\n';
     }
 } // namespace stoat::protocol

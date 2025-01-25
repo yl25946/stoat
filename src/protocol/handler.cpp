@@ -21,6 +21,7 @@
 #include <functional>
 
 #include "../util/string_map.h"
+#include "uci.h"
 #include "usi.h"
 
 namespace stoat::protocol {
@@ -35,6 +36,7 @@ namespace stoat::protocol {
             };
 
             registerHandler.template operator()<UsiHandler>("usi");
+            registerHandler.template operator()<UciHandler>("uci");
 
             return map;
         }();

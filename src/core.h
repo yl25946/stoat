@@ -551,6 +551,16 @@ namespace stoat {
             return static_cast<usize>(m_id);
         }
 
+        [[nodiscard]] u32 rank() const {
+            assert(m_id != kNoneId);
+            return static_cast<u32>(m_id) / 9;
+        }
+
+        [[nodiscard]] u32 file() const {
+            assert(m_id != kNoneId);
+            return static_cast<u32>(m_id) % 9;
+        }
+
         [[nodiscard]] constexpr u128 bit() const {
             assert(m_id != kNoneId);
             return u128{1} << m_id;
@@ -696,8 +706,8 @@ namespace stoat {
                 return stream;
             }
 
-            std::cout << static_cast<char>('1' + 8 - (square.raw() % 9));
-            std::cout << static_cast<char>('a' + 8 - (square.raw() / 9));
+            stream << static_cast<char>('1' + 8 - square.file());
+            stream << static_cast<char>('a' + 8 - square.rank());
 
             return stream;
         }

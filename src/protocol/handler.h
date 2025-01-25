@@ -20,7 +20,9 @@
 
 #include "../types.h"
 
+#include <iostream>
 #include <memory>
+#include <optional>
 #include <span>
 #include <string_view>
 #include <variant>
@@ -46,6 +48,15 @@ namespace stoat::protocol {
 
     using DisplayScore = std::variant<CpDisplayScore, MateDisplayScore>;
 
+    struct SearchInfo {
+        i32 depth{};
+        std::optional<i32> seldepth{};
+        std::optional<f64> timeSec{};
+        usize nodes;
+        DisplayScore score;
+        const PvList& pv;
+    };
+
     enum class CommandResult {
         Continue = 0,
         Quit,
@@ -65,16 +76,9 @@ namespace stoat::protocol {
         ) = 0;
 
         // engine -> gui
-        virtual void printSearchInfo(
-            i32 depth,
-            i32 seldepth,
-            f64 timeSec,
-            usize nodes,
-            DisplayScore score,
-            const PvList& pv
-        ) const = 0;
-        virtual void printInfoString(std::string_view str) const = 0;
-        virtual void printBestMove(Move move) const = 0;
+        virtual void printSearchInfo(std::ostream& stream, const SearchInfo& info) const = 0;
+        virtual void printInfoString(std::ostream& stream, std::string_view str) const = 0;
+        virtual void printBestMove(std::ostream& stream, Move move) const = 0;
     };
 
     constexpr std::string_view kDefaultHandler = "usi";

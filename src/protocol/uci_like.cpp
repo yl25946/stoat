@@ -65,36 +65,43 @@ namespace stoat::protocol {
         return CommandResult::Unknown;
     }
 
-    void UciLikeHandler::printSearchInfo(
-        i32 depth,
-        i32 seldepth,
-        f64 timeSec,
-        usize nodes,
-        DisplayScore score,
-        const PvList& pv
-    ) const {
-        const auto ms = static_cast<usize>(timeSec * 1000.0);
-        const auto nps = static_cast<usize>(static_cast<f64>(nodes) / timeSec);
+    void UciLikeHandler::printSearchInfo(std::ostream& stream, const SearchInfo& info) const {
+        stream << "info depth " << info.depth;
 
-        std::cout << "info depth " << depth << " seldepth " << seldepth << " time " << ms << " nodes " << nodes
-                  << " nps " << nps << " pv";
-
-        for (usize i = 0; i < pv.length; ++i) {
-            std::cout << ' ';
-            printMove(pv.moves[i]);
+        if (info.seldepth) {
+            stream << " seldepth " << *info.seldepth;
         }
 
-        std::cout << std::endl;
+        if (info.timeSec) {
+            const auto ms = static_cast<usize>(*info.timeSec * 1000.0);
+            stream << " time " << ms;
+        }
+
+        stream << " nodes " << info.nodes;
+
+        if (info.timeSec) {
+            const auto nps = static_cast<usize>(static_cast<f64>(info.nodes) / *info.timeSec);
+            stream << " nps " << nps;
+        }
+
+        stream << " pv";
+
+        for (usize i = 0; i < info.pv.length; ++i) {
+            stream << ' ';
+            printMove(stream, info.pv.moves[i]);
+        }
+
+        stream << std::endl;
     }
 
-    void UciLikeHandler::printInfoString(std::string_view str) const {
-        std::cout << "info string " << str << std::endl;
+    void UciLikeHandler::printInfoString(std::ostream& stream, std::string_view str) const {
+        stream << "info string " << str << std::endl;
     }
 
-    void UciLikeHandler::printBestMove(Move move) const {
-        std::cout << "bestmove ";
-        printMove(move);
-        std::cout << std::endl;
+    void UciLikeHandler::printBestMove(std::ostream& stream, Move move) const {
+        stream << "bestmove ";
+        printMove(stream, move);
+        stream << std::endl;
     }
 
     void UciLikeHandler::registerCommandHandler(std::string_view command, CommandHandlerType handler) {
@@ -180,8 +187,16 @@ namespace stoat::protocol {
                     pv.moves[0] = move;
                     pv.length = 1;
 
-                    printSearchInfo(1, 1, 0.0, 1, CpDisplayScore{0}, pv);
-                    printBestMove(move);
+                    const SearchInfo info = {
+                        .depth = 1,
+                        .seldepth = 1,
+                        .nodes = 1,
+                        .score = CpDisplayScore{0},
+                        .pv = pv,
+                    };
+
+                    printSearchInfo(std::cout, info);
+                    printBestMove(std::cout, move);
 
                     break;
                 }
@@ -199,10 +214,11 @@ namespace stoat::protocol {
             std::cout << str.view();
         };
 
-        std::cout << '\n' << m_state.pos;
+        std::cout << '\n';
+        printBoard(std::cout, m_state.pos);
 
         std::cout << "\n\n";
-        printFenLine(m_state.pos);
+        printFenLine(std::cout, m_state.pos);
 
         std::cout << "Key: ";
         printKey(m_state.pos.key());
