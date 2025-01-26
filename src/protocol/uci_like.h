@@ -59,6 +59,7 @@ namespace stoat::protocol {
         virtual void printBoard(std::ostream& stream, const Position& pos) const = 0;
         virtual void printFen(std::ostream& stream, const Position& pos) const = 0;
         virtual void printMove(std::ostream& stream, Move move) const = 0;
+        virtual void printMateScore(std::ostream& stream, i32 plies) const = 0;
 
         // ech
         virtual void printFenLine(std::ostream& stream, const Position& pos) const = 0;

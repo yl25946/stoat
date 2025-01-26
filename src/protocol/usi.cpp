@@ -62,6 +62,10 @@ namespace stoat::protocol {
         stream << move;
     }
 
+    void UsiHandler::printMateScore(std::ostream& stream, i32 plies) const {
+        stream << plies;
+    }
+
     void UsiHandler::printFenLine(std::ostream& stream, const Position& pos) const {
         stream << "Sfen: " << pos.sfen() << '\n';
     }

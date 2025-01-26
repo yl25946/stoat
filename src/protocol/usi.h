@@ -36,6 +36,7 @@ namespace stoat::protocol {
         void printBoard(std::ostream& stream, const Position& pos) const final;
         void printFen(std::ostream& stream, const Position& pos) const final;
         void printMove(std::ostream& stream, Move move) const final;
+        void printMateScore(std::ostream& stream, i32 plies) const final;
 
         void printFenLine(std::ostream& stream, const Position& pos) const final;
     };

@@ -224,6 +224,14 @@ namespace stoat::protocol {
         }
     }
 
+    void UciHandler::printMateScore(std::ostream& stream, i32 plies) const {
+        if (plies > 0) {
+            stream << ((plies + 1) / 2);
+        } else {
+            stream << (plies / 2);
+        }
+    }
+
     void UciHandler::printFenLine(std::ostream& stream, const Position& pos) const {
         stream << "Fen: ";
         printFen(stream, pos);

@@ -87,8 +87,9 @@ namespace stoat::protocol {
         stream << " score ";
 
         if (std::holds_alternative<MateDisplayScore>(info.score)) {
-            const auto moves = std::get<MateDisplayScore>(info.score).moves;
-            std::cout << "mate " << moves;
+            const auto plies = std::get<MateDisplayScore>(info.score).plies;
+            std::cout << "mate ";
+            printMateScore(std::cout, plies);
         } else {
             const auto score = std::get<CpDisplayScore>(info.score).score;
             std::cout << "cp " << score;

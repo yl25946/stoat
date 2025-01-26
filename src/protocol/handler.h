@@ -43,7 +43,7 @@ namespace stoat::protocol {
     };
 
     struct MateDisplayScore {
-        i32 moves;
+        i32 plies;
     };
 
     using DisplayScore = std::variant<CpDisplayScore, MateDisplayScore>;
