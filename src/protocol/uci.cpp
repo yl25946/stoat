@@ -76,7 +76,7 @@ namespace stoat::protocol {
             return util::err<std::optional<std::string>>("Missing fen");
         }
 
-        if (args.size() < 6 || args.size() > 7) {
+        if (args.size() < 4 || args.size() > 5) {
             return util::err<std::optional<std::string>>("Failed to parse FEN: wrong number of FEN parts");
         }
 
@@ -109,8 +109,8 @@ namespace stoat::protocol {
 
         sfen << board << ' ' << stm << ' ' << hand;
 
-        if (args.size() == 7) {
-            if (const auto fullmove = util::tryParse<u32>(args[6])) {
+        if (args.size() == 5) {
+            if (const auto fullmove = util::tryParse<u32>(args[4])) {
                 const auto moveCount = *fullmove * 2 - (stm == 'b');
                 sfen << ' ' << moveCount;
             } else {
