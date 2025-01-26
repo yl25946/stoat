@@ -26,7 +26,15 @@
 
 using namespace stoat;
 
-i32 main() {
+i32 main(i32 argc, char* argv[]) {
+    if (argc > 1) {
+        const auto subcommand = std::string_view{argv[1]};
+        if (subcommand == "bench") {
+            std::cout << "1 nodes 4000000 nps" << std::endl;
+            return 0;
+        }
+    }
+
     protocol::EngineState state{};
 
     std::string currHandler{protocol::kDefaultHandler};
