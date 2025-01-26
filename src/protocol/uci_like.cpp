@@ -172,8 +172,8 @@ namespace stoat::protocol {
         u32 start = 0;
 
         while (true) {
-            const auto idx = m_rng.nextU32(moves.size() - start);
-            const auto move = moves[start + idx];
+            const auto idx = start + m_rng.nextU32(moves.size() - start);
+            const auto move = moves[idx];
 
             if (m_state.pos.isLegal(move)) {
                 m_state.keyHistory.push_back(m_state.pos.key());
