@@ -18,12 +18,25 @@
 
 #include "usi.h"
 
+#include <algorithm>
 #include <cassert>
 
 namespace stoat::protocol {
     UsiHandler::UsiHandler(EngineState& state) :
             UciLikeHandler{state} {
         registerCommandHandler("usinewgame", [this](std::span<std::string_view>) { handleNewGame(); });
+    }
+
+    void UsiHandler::printOptionName(std::ostream& stream, std::string_view name) const {
+        static constexpr std::array kFixedSemanticsOptions = {
+            "Hash",
+        };
+
+        if (std::ranges::find(kFixedSemanticsOptions, name) != kFixedSemanticsOptions.end()) {
+            stream << "USI_";
+        }
+
+        stream << name;
     }
 
     void UsiHandler::finishInitialInfo() const {

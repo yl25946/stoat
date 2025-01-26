@@ -31,11 +31,12 @@
 namespace stoat::protocol {
     UciLikeHandler::UciLikeHandler(EngineState& state) :
             m_state{state} {
-#define REGISTER_HANDLER(Command) registerCommandHandler(#Command, [this](auto tokens) { handle_##Command(tokens); })
+#define REGISTER_HANDLER(Command) registerCommandHandler(#Command, [this](auto args) { handle_##Command(args); })
 
         REGISTER_HANDLER(isready);
         REGISTER_HANDLER(position);
         REGISTER_HANDLER(go);
+        REGISTER_HANDLER(setoption);
 
         REGISTER_HANDLER(d);
         REGISTER_HANDLER(splitperft);
@@ -47,7 +48,16 @@ namespace stoat::protocol {
         std::cout << "id name " << kName << ' ' << kVersion << '\n';
         std::cout << "id author " << kAuthor << '\n';
 
-        //TODO options
+        //TODO actual options
+
+        // dummy options for OB
+        std::cout << "option name ";
+        printOptionName(std::cout, "Hash");
+        std::cout << " type spin default 64 min 1 max 131072\n";
+
+        std::cout << "option name ";
+        printOptionName(std::cout, "Threads");
+        std::cout << " type spin default 1 min 1 max 1\n";
 
         finishInitialInfo();
     }
@@ -216,6 +226,10 @@ namespace stoat::protocol {
             std::swap(moves[start], moves[idx]);
             ++start;
         }
+    }
+
+    void UciLikeHandler::handle_setoption(std::span<std::string_view> args) {
+        //
     }
 
     void UciLikeHandler::handle_d([[maybe_unused]] std::span<std::string_view> args) {

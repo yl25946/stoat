@@ -51,6 +51,8 @@ namespace stoat::protocol {
 
         void handleNewGame();
 
+        virtual void printOptionName(std::ostream& stream, std::string_view name) const = 0;
+
         virtual void finishInitialInfo() const = 0;
 
         virtual util::Result<Position, std::optional<std::string>> parsePosition(std::span<std::string_view> args) = 0;
@@ -74,6 +76,7 @@ namespace stoat::protocol {
         void handle_isready(std::span<std::string_view> args);
         void handle_position(std::span<std::string_view> args);
         void handle_go(std::span<std::string_view> args);
+        void handle_setoption(std::span<std::string_view> args);
 
         // nonstandard
         void handle_d(std::span<std::string_view> args);

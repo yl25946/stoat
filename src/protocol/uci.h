@@ -28,6 +28,8 @@ namespace stoat::protocol {
         explicit UciHandler(EngineState& state);
         ~UciHandler() override = default;
 
+        void printOptionName(std::ostream& stream, std::string_view name) const final;
+
         void finishInitialInfo() const final;
 
         util::Result<Position, std::optional<std::string>> parsePosition(std::span<std::string_view> args) final;
