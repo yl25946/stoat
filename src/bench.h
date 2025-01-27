@@ -16,32 +16,11 @@
  * along with Stoat. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "move.h"
+#pragma once
 
-namespace stoat {
-    std::ostream& operator<<(std::ostream& stream, const Move& move) {
-        if (move.isNull()) {
-            stream << "0000";
-            return stream;
-        }
+#include "types.h"
 
-        if (move.isDrop()) {
-            const auto square = move.to();
-            const auto piece = move.dropPiece();
-
-            stream << piece.str()[0] << '*' << square;
-            return stream;
-        }
-
-        const auto to = move.to();
-        const auto from = move.from();
-
-        stream << from << to;
-
-        if (move.isPromo()) {
-            stream << '+';
-        }
-
-        return stream;
-    }
-} // namespace stoat
+namespace stoat::bench {
+    constexpr i32 kDefaultBenchDepth = 3;
+    void run(i32 depth = kDefaultBenchDepth);
+} // namespace stoat::bench

@@ -22,20 +22,21 @@
 #include <iostream>
 #include <sstream>
 
+#include "../limit.h"
 #include "../perft.h"
 #include "../util/parse.h"
 #include "common.h"
 
-#include "../movegen.h"
-
 namespace stoat::protocol {
     UciLikeHandler::UciLikeHandler(EngineState& state) :
             m_state{state} {
-#define REGISTER_HANDLER(Command) registerCommandHandler(#Command, [this](auto args) { handle_##Command(args); })
+#define REGISTER_HANDLER(Command) \
+    registerCommandHandler(#Command, [this](auto args, auto startTime) { handle_##Command(args, startTime); })
 
         REGISTER_HANDLER(isready);
         REGISTER_HANDLER(position);
         REGISTER_HANDLER(go);
+        REGISTER_HANDLER(stop);
         REGISTER_HANDLER(setoption);
 
         REGISTER_HANDLER(d);
@@ -62,17 +63,21 @@ namespace stoat::protocol {
         finishInitialInfo();
     }
 
-    CommandResult UciLikeHandler::handleCommand(std::string_view command, std::span<std::string_view> args) {
+    CommandResult UciLikeHandler::handleCommand(
+        std::string_view command,
+        std::span<std::string_view> args,
+        util::Instant startTime
+    ) {
         if (command == "quit") {
-            return CommandResult::Quit;
+            return CommandResult::kQuit;
         }
 
         if (auto itr = m_cmdHandlers.find(command); itr != m_cmdHandlers.end()) {
-            itr->second(args);
-            return CommandResult::Continue;
+            itr->second(args, startTime);
+            return CommandResult::kContinue;
         }
 
-        return CommandResult::Unknown;
+        return CommandResult::kUnknown;
     }
 
     void UciLikeHandler::printSearchInfo(std::ostream& stream, const SearchInfo& info) const {
@@ -135,14 +140,28 @@ namespace stoat::protocol {
     }
 
     void UciLikeHandler::handleNewGame() {
-        //
+        if (m_state.searcher->isSearching()) {
+            std::cerr << "Still searching" << std::endl;
+            return;
+        }
+
+        m_state.searcher->newGame();
     }
 
-    void UciLikeHandler::handle_isready([[maybe_unused]] std::span<std::string_view> args) {
+    void UciLikeHandler::handle_isready(
+        [[maybe_unused]] std::span<std::string_view> args,
+        [[maybe_unused]] util::Instant startTime
+    ) {
+        m_state.searcher->ensureReady();
         std::cout << "readyok" << std::endl;
     }
 
-    void UciLikeHandler::handle_position(std::span<std::string_view> args) {
+    void UciLikeHandler::handle_position(std::span<std::string_view> args, [[maybe_unused]] util::Instant startTime) {
+        if (m_state.searcher->isSearching()) {
+            std::cerr << "Still searching" << std::endl;
+            return;
+        }
+
         if (args.empty()) {
             return;
         }
@@ -186,53 +205,162 @@ namespace stoat::protocol {
         }
     }
 
-    void UciLikeHandler::handle_go(std::span<std::string_view> args) {
-        movegen::MoveList moves{};
-        movegen::generateAll(moves, m_state.pos);
+    void UciLikeHandler::handle_go(std::span<std::string_view> args, util::Instant startTime) {
+        if (m_state.searcher->isSearching()) {
+            std::cerr << "Still searching" << std::endl;
+            return;
+        }
 
-        u32 start = 0;
+        auto limiter = std::make_unique<limit::CompoundLimiter>();
 
-        while (true) {
-            const auto idx = start + m_rng.nextU32(moves.size() - start);
-            const auto move = moves[idx];
+        bool infinite = false;
 
-            if (m_state.pos.isLegal(move)) {
-                m_state.keyHistory.push_back(m_state.pos.key());
-                const auto newPos = m_state.pos.applyMove(move);
-                const auto sennichite = newPos.testSennichite(m_state.keyHistory);
-                m_state.keyHistory.pop_back();
+        auto maxDepth = kMaxDepth;
 
-                // avoid accidental perpetual
-                if (sennichite != SennichiteStatus::Win) {
-                    auto pv = PvList{};
-                    pv.moves[0] = move;
-                    pv.length = 1;
+        std::optional<f64> btime{};
+        std::optional<f64> wtime{};
 
-                    const SearchInfo info = {
-                        .depth = 1,
-                        .seldepth = 1,
-                        .nodes = 1,
-                        .score = CpDisplayScore{0},
-                        .pv = pv,
-                    };
+        std::optional<f64> binc{};
+        std::optional<f64> winc{};
 
-                    printSearchInfo(std::cout, info);
-                    printBestMove(std::cout, move);
-
-                    break;
+        for (i32 i = 0; i < args.size(); ++i) {
+            if (args[i] == "infinite") {
+                infinite = true;
+            } else if (args[i] == "depth") {
+                if (++i == args.size()) {
+                    std::cerr << "Missing depth" << std::endl;
+                    return;
                 }
-            }
 
-            std::swap(moves[start], moves[idx]);
-            ++start;
+                if (!util::tryParse(maxDepth, args[i])) {
+                    std::cerr << "Invalid depth '" << args[i] << "'" << std::endl;
+                    return;
+                }
+            } else if (args[i] == "nodes") {
+                if (++i == args.size()) {
+                    std::cerr << "Missing node limit" << std::endl;
+                    return;
+                }
+
+                usize maxNodes{};
+
+                if (!util::tryParse(maxNodes, args[i])) {
+                    std::cerr << "Invalid node limit '" << args[i] << "'" << std::endl;
+                    return;
+                }
+
+                limiter->addLimiter<limit::NodeLimiter>(maxNodes);
+            } else if (args[i] == "movetime") {
+                if (++i == args.size()) {
+                    std::cerr << "Missing move time limit" << std::endl;
+                    return;
+                }
+
+                u64 maxTimeMs{};
+
+                if (!util::tryParse(maxTimeMs, args[i])) {
+                    std::cerr << "Invalid move time limit '" << args[i] << "'" << std::endl;
+                    return;
+                }
+
+                const auto maxTimeSec = static_cast<f64>(maxTimeMs) / 1000.0;
+                limiter->addLimiter<limit::MoveTimeLimiter>(startTime, maxTimeSec);
+            } else if (args[i] == btimeToken()) {
+                if (++i == args.size()) {
+                    std::cerr << "Missing " << btimeToken() << " limit" << std::endl;
+                    return;
+                }
+
+                u64 btimeMs{};
+
+                if (!util::tryParse(btimeMs, args[i])) {
+                    std::cerr << "Invalid " << btimeToken() << " limit '" << args[i] << "'" << std::endl;
+                    return;
+                }
+
+                btime = static_cast<f64>(btimeMs) / 1000.0;
+            } else if (args[i] == wtimeToken()) {
+                if (++i == args.size()) {
+                    std::cerr << "Missing " << wtimeToken() << " limit" << std::endl;
+                    return;
+                }
+
+                u64 wtimeMs{};
+
+                if (!util::tryParse(wtimeMs, args[i])) {
+                    std::cerr << "Invalid " << wtimeToken() << " limit '" << args[i] << "'" << std::endl;
+                    return;
+                }
+
+                wtime = static_cast<f64>(wtimeMs) / 1000.0;
+            } else if (args[i] == bincToken()) {
+                if (++i == args.size()) {
+                    std::cerr << "Missing " << bincToken() << " limit" << std::endl;
+                    return;
+                }
+
+                u64 bincMs{};
+
+                if (!util::tryParse(bincMs, args[i])) {
+                    std::cerr << "Invalid " << bincToken() << " limit '" << args[i] << "'" << std::endl;
+                    return;
+                }
+
+                binc = static_cast<f64>(bincMs) / 1000.0;
+            } else if (args[i] == wincToken()) {
+                if (++i == args.size()) {
+                    std::cerr << "Missing " << wincToken() << " limit" << std::endl;
+                    return;
+                }
+
+                u64 wincMs{};
+
+                if (!util::tryParse(wincMs, args[i])) {
+                    std::cerr << "Invalid " << wincToken() << " limit '" << args[i] << "'" << std::endl;
+                    return;
+                }
+
+                winc = static_cast<f64>(wincMs) / 1000.0;
+            }
+        }
+
+        const auto time = m_state.pos.stm() == Colors::kBlack ? btime : wtime;
+        const auto inc = m_state.pos.stm() == Colors::kBlack ? binc : winc;
+
+        if (time) {
+            const limit::TimeLimits limits{
+                .remaining = *time,
+                .increment = inc ? *inc : 0,
+            };
+
+            limiter->addLimiter<limit::TimeManager>(startTime, limits);
+        } else if (inc) {
+            printInfoString(std::cout, "Warning: increment given but no time, ignoring");
+        }
+
+        m_state.searcher
+            ->startSearch(m_state.pos, m_state.keyHistory, startTime, infinite, maxDepth, std::move(limiter));
+    }
+
+    void UciLikeHandler::handle_stop(std::span<std::string_view> args, [[maybe_unused]] util::Instant startTime) {
+        if (m_state.searcher->isSearching()) {
+            m_state.searcher->stop();
+        } else {
+            std::cerr << "Not searching" << std::endl;
         }
     }
 
-    void UciLikeHandler::handle_setoption(std::span<std::string_view> args) {
-        //
+    void UciLikeHandler::handle_setoption(std::span<std::string_view> args, [[maybe_unused]] util::Instant startTime) {
+        if (m_state.searcher->isSearching()) {
+            std::cerr << "Still searching" << std::endl;
+            return;
+        }
     }
 
-    void UciLikeHandler::handle_d([[maybe_unused]] std::span<std::string_view> args) {
+    void UciLikeHandler::handle_d(
+        [[maybe_unused]] std::span<std::string_view> args,
+        [[maybe_unused]] util::Instant startTime
+    ) {
         const auto printKey = [](u64 key) {
             std::ostringstream str{};
             str << "0x" << std::hex << std::setw(16) << std::setfill('0') << key;
@@ -265,7 +393,7 @@ namespace stoat::protocol {
         std::cout << std::endl;
     }
 
-    void UciLikeHandler::handle_splitperft(std::span<std::string_view> args) {
+    void UciLikeHandler::handle_splitperft(std::span<std::string_view> args, [[maybe_unused]] util::Instant startTime) {
         if (args.empty()) {
             return;
         }
