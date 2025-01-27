@@ -32,100 +32,11 @@
 #include "movegen.h"
 #include "position.h"
 #include "pv.h"
+#include "thread.h"
 #include "util/barrier.h"
 #include "util/timer.h"
 
 namespace stoat {
-    struct SearchStats {
-        SearchStats() = default;
-
-        inline SearchStats(const SearchStats& other) {
-            *this = other;
-        }
-
-        std::atomic<i32> seldepth{};
-        std::atomic<usize> nodes{};
-
-        SearchStats& operator=(const SearchStats& other) {
-            seldepth.store(other.seldepth);
-            nodes.store(other.nodes);
-
-            return *this;
-        }
-    };
-
-    class ThreadPosGuard {
-    public:
-        explicit ThreadPosGuard(std::vector<u64>& keyHistory) :
-                m_keyHistory{keyHistory} {}
-
-        ThreadPosGuard(const ThreadPosGuard&) = delete;
-        ThreadPosGuard(ThreadPosGuard&&) = delete;
-
-        inline ~ThreadPosGuard() {
-            m_keyHistory.pop_back();
-        }
-
-    private:
-        std::vector<u64>& m_keyHistory;
-    };
-
-    struct StackFrame {
-        PvList pv{};
-    };
-
-    struct alignas(CacheLineSize) ThreadData {
-        ThreadData();
-
-        u32 id{};
-        std::thread thread{};
-
-        i32 maxDepth{};
-
-        Position rootPos{};
-        std::vector<u64> keyHistory{};
-
-        SearchStats stats{};
-
-        i32 rootDepth{};
-        i32 depthCompleted{};
-
-        Score lastScore{};
-        PvList lastPv{};
-
-        std::vector<StackFrame> stack{};
-
-        [[nodiscard]] inline u32 isMainThread() const {
-            return id == 0;
-        }
-
-        [[nodiscard]] inline i32 loadSeldepth() const {
-            return stats.seldepth.load(std::memory_order::relaxed);
-        }
-
-        inline void updateSeldepth(i32 v) {
-            if (v > loadSeldepth()) {
-                stats.seldepth.store(v, std::memory_order::relaxed);
-            }
-        }
-
-        inline void resetSeldepth() {
-            stats.seldepth.store(0);
-        }
-
-        [[nodiscard]] inline usize loadNodes() const {
-            return stats.nodes.load(std::memory_order::relaxed);
-        }
-
-        inline void incNodes() {
-            stats.nodes.fetch_add(1, std::memory_order::relaxed);
-        }
-
-        void reset(const Position& newRootPos, std::span<const u64> newKeyHistory);
-
-        [[nodiscard]] std::pair<Position, ThreadPosGuard> applyMove(const Position& pos, Move move);
-    };
-
     struct BenchInfo {
         usize nodes{};
         f64 time{};

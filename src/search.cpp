@@ -41,32 +41,6 @@ namespace stoat {
         }
     } // namespace
 
-    ThreadData::ThreadData() {
-        keyHistory.reserve(1024);
-        stack.resize(kMaxDepth);
-    }
-
-    void ThreadData::reset(const Position& newRootPos, std::span<const u64> newKeyHistory) {
-        rootPos = newRootPos;
-
-        keyHistory.clear();
-        keyHistory.reserve(newKeyHistory.size());
-
-        std::ranges::copy(newKeyHistory, std::back_inserter(keyHistory));
-
-        stats.seldepth.store(0);
-        stats.nodes.store(0);
-    }
-
-    std::pair<Position, ThreadPosGuard> ThreadData::applyMove(const Position& pos, Move move) {
-        keyHistory.push_back(pos.key());
-        return std::pair<Position, ThreadPosGuard>{
-            std::piecewise_construct,
-            std::forward_as_tuple(pos.applyMove(move)),
-            std::forward_as_tuple(keyHistory)
-        };
-    }
-
     Searcher::Searcher() {
         setThreads(1);
     }
