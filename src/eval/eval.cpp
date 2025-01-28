@@ -21,50 +21,56 @@
 #include "material.h"
 
 namespace stoat::eval {
-    Score staticEval(const Position& pos) {
-        const auto imbalance = [&](PieceType pt) {
-            const auto count = pos.pieceBb(pt, pos.stm()).popcount() - pos.pieceBb(pt, pos.stm().flip()).popcount();
-            return count * pieceValue(pt);
-        };
+    namespace {
+        [[nodiscard]] Score evalMaterial(const Position& pos, Color c) {
+            const auto materialCount = [&](PieceType pt) {
+                const auto count = pos.pieceBb(pt, c).popcount();
+                return count * pieceValue(pt);
+            };
 
-        const auto handValue = [](const Hand& hand) {
-            const auto handPieceValue = [&](PieceType pt) { return static_cast<i32>(hand.count(pt)) * pieceValue(pt); };
+            Score score{};
+
+            score += materialCount(PieceTypes::kPawn);
+            score += materialCount(PieceTypes::kPromotedPawn);
+            score += materialCount(PieceTypes::kLance);
+            score += materialCount(PieceTypes::kKnight);
+            score += materialCount(PieceTypes::kPromotedLance);
+            score += materialCount(PieceTypes::kPromotedKnight);
+            score += materialCount(PieceTypes::kSilver);
+            score += materialCount(PieceTypes::kPromotedSilver);
+            score += materialCount(PieceTypes::kGold);
+            score += materialCount(PieceTypes::kBishop);
+            score += materialCount(PieceTypes::kRook);
+            score += materialCount(PieceTypes::kPromotedBishop);
+            score += materialCount(PieceTypes::kPromotedRook);
+
+            const auto& hand = pos.hand(c);
 
             if (hand.empty()) {
-                return 0;
+                return score;
             }
 
-            Score value{};
+            const auto handPieceValue = [&](PieceType pt) { return static_cast<i32>(hand.count(pt)) * pieceValue(pt); };
 
-            value += handPieceValue(PieceTypes::kPawn);
-            value += handPieceValue(PieceTypes::kLance);
-            value += handPieceValue(PieceTypes::kKnight);
-            value += handPieceValue(PieceTypes::kSilver);
-            value += handPieceValue(PieceTypes::kGold);
-            value += handPieceValue(PieceTypes::kBishop);
-            value += handPieceValue(PieceTypes::kRook);
+            score += handPieceValue(PieceTypes::kPawn);
+            score += handPieceValue(PieceTypes::kLance);
+            score += handPieceValue(PieceTypes::kKnight);
+            score += handPieceValue(PieceTypes::kSilver);
+            score += handPieceValue(PieceTypes::kGold);
+            score += handPieceValue(PieceTypes::kBishop);
+            score += handPieceValue(PieceTypes::kRook);
 
-            return value;
-        };
+            return score;
+        }
+    } // namespace
+
+    Score staticEval(const Position& pos) {
+        const auto stm = pos.stm();
+        const auto nstm = pos.stm().flip();
 
         Score score{};
 
-        score += imbalance(PieceTypes::kPawn);
-        score += imbalance(PieceTypes::kPromotedPawn);
-        score += imbalance(PieceTypes::kLance);
-        score += imbalance(PieceTypes::kKnight);
-        score += imbalance(PieceTypes::kPromotedLance);
-        score += imbalance(PieceTypes::kPromotedKnight);
-        score += imbalance(PieceTypes::kSilver);
-        score += imbalance(PieceTypes::kPromotedSilver);
-        score += imbalance(PieceTypes::kGold);
-        score += imbalance(PieceTypes::kBishop);
-        score += imbalance(PieceTypes::kRook);
-        score += imbalance(PieceTypes::kPromotedBishop);
-        score += imbalance(PieceTypes::kPromotedRook);
-
-        score += handValue(pos.hand(pos.stm()));
-        score -= handValue(pos.hand(pos.stm().flip()));
+        score += evalMaterial(pos, stm) - evalMaterial(pos, nstm);
 
         return score;
     }
