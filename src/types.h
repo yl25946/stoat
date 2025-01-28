@@ -20,6 +20,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 namespace stoat {
     using u8 = std::uint8_t;
@@ -38,7 +39,17 @@ namespace stoat {
     using f64 = double;
 
     using usize = std::size_t;
+
+    [[nodiscard]] constexpr u128 toU128(u64 high, u64 low) {
+        return (static_cast<u128>(high) << 64) | static_cast<u128>(low);
+    }
+
+    [[nodiscard]] constexpr std::pair<u64, u64> fromU128(u128 v) {
+        return {static_cast<u64>(v >> 64), static_cast<u64>(v)};
+    }
 } // namespace stoat
+
+#define U128(High, Low) (stoat::toU128(UINT64_C(High), UINT64_C(Low)))
 
 #define ST_STRINGIFY_(S) #S
 #define ST_STRINGIFY(S) ST_STRINGIFY_(S)

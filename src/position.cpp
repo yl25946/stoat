@@ -674,18 +674,17 @@ namespace stoat {
     Position Position::startpos() {
         Position pos{};
 
-        pos.m_colors[Colors::kBlack.idx()] = Bitboard{u128{UINT64_C(0x7fd05ff)}};
-        pos.m_colors[Colors::kWhite.idx()] =
-            Bitboard{(u128{UINT64_C(0x1ff41)} << 64) | u128{UINT64_C(0x7fc0000000000000)}};
+        pos.m_colors[Colors::kBlack.idx()] = Bitboard{U128(0, 0x7fd05ff)};
+        pos.m_colors[Colors::kWhite.idx()] = Bitboard{U128(0x1ff41, 0x7fc0000000000000)};
 
-        pos.m_pieces[PieceTypes::kPawn.idx()] = Bitboard{u128{UINT64_C(0x7fc0000007fc0000)}};
-        pos.m_pieces[PieceTypes::kLance.idx()] = Bitboard{(u128{UINT64_C(0x10100)} << 64) | u128{UINT64_C(0x101)}};
-        pos.m_pieces[PieceTypes::kKnight.idx()] = Bitboard{(u128{UINT64_C(0x8200)} << 64) | u128{UINT64_C(0x82)}};
-        pos.m_pieces[PieceTypes::kSilver.idx()] = Bitboard{(u128{UINT64_C(0x4400)} << 64) | u128{UINT64_C(0x44)}};
-        pos.m_pieces[PieceTypes::kGold.idx()] = Bitboard{(u128{UINT64_C(0x2800)} << 64) | u128{UINT64_C(0x28)}};
-        pos.m_pieces[PieceTypes::kKing.idx()] = Bitboard{(u128{UINT64_C(0x1000)} << 64) | u128{UINT64_C(0x10)}};
-        pos.m_pieces[PieceTypes::kBishop.idx()] = Bitboard{(u128{UINT64_C(0x40)} << 64) | u128{UINT64_C(0x400)}};
-        pos.m_pieces[PieceTypes::kRook.idx()] = Bitboard{(u128{UINT64_C(0x1)} << 64) | u128{UINT64_C(0x10000)}};
+        pos.m_pieces[PieceTypes::kPawn.idx()] = Bitboard{U128(0, 0x7fc0000007fc0000)};
+        pos.m_pieces[PieceTypes::kLance.idx()] = Bitboard{U128(0x10100, 0x101)};
+        pos.m_pieces[PieceTypes::kKnight.idx()] = Bitboard{U128(0x8200, 0x82)};
+        pos.m_pieces[PieceTypes::kSilver.idx()] = Bitboard{U128(0x4400, 0x44)};
+        pos.m_pieces[PieceTypes::kGold.idx()] = Bitboard{U128(0x2800, 0x28)};
+        pos.m_pieces[PieceTypes::kKing.idx()] = Bitboard{U128(0x1000, 0x10)};
+        pos.m_pieces[PieceTypes::kBishop.idx()] = Bitboard{U128(0x40, 0x400)};
+        pos.m_pieces[PieceTypes::kRook.idx()] = Bitboard{U128(0x1, 0x10000)};
 
         pos.regen();
 

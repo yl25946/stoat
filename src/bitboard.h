@@ -365,28 +365,28 @@ namespace stoat {
     private:
         u128 m_bb{};
 
-        static constexpr u128 kAll = (u128{UINT64_C(0x1ffff)} << 64) | u128{UINT64_C(0xffffffffffffffff)};
+        static constexpr u128 kAll = U128(0x1ffff, 0xffffffffffffffff);
         static constexpr u128 kEmpty = 0;
 
-        static constexpr u128 kRankI = u128{UINT64_C(0x1ff)};
-        static constexpr u128 kRankH = u128{UINT64_C(0x3fe00)};
-        static constexpr u128 kRankG = u128{UINT64_C(0x7fc0000)};
-        static constexpr u128 kRankF = u128{UINT64_C(0xff8000000)};
-        static constexpr u128 kRankE = u128{UINT64_C(0x1ff000000000)};
-        static constexpr u128 kRankD = u128{UINT64_C(0x3fe00000000000)};
-        static constexpr u128 kRankC = u128{UINT64_C(0x7fc0000000000000)};
-        static constexpr u128 kRankB = (u128{UINT64_C(0xff)} << 64) | u128{UINT64_C(0x8000000000000000)};
-        static constexpr u128 kRankA = u128{UINT64_C(0x1ff00)} << 64;
+        static constexpr u128 kRankI = U128(0, 0x1ff);
+        static constexpr u128 kRankH = U128(0, 0x3fe00);
+        static constexpr u128 kRankG = U128(0, 0x7fc0000);
+        static constexpr u128 kRankF = U128(0, 0xff8000000);
+        static constexpr u128 kRankE = U128(0, 0x1ff000000000);
+        static constexpr u128 kRankD = U128(0, 0x3fe00000000000);
+        static constexpr u128 kRankC = U128(0, 0x7fc0000000000000);
+        static constexpr u128 kRankB = U128(0xff, 0x8000000000000000);
+        static constexpr u128 kRankA = U128(0x1ff00, 0);
 
-        static constexpr u128 kFile9 = (u128{UINT64_C(0x100)} << 64) | u128{UINT64_C(0x8040201008040201)};
-        static constexpr u128 kFile8 = (u128{UINT64_C(0x201)} << 64) | u128{UINT64_C(0x80402010080402)};
-        static constexpr u128 kFile7 = (u128{UINT64_C(0x402)} << 64) | u128{UINT64_C(0x100804020100804)};
-        static constexpr u128 kFile6 = (u128{UINT64_C(0x804)} << 64) | u128{UINT64_C(0x201008040201008)};
-        static constexpr u128 kFile5 = (u128{UINT64_C(0x1008)} << 64) | u128{UINT64_C(0x402010080402010)};
-        static constexpr u128 kFile4 = (u128{UINT64_C(0x2010)} << 64) | u128{UINT64_C(0x804020100804020)};
-        static constexpr u128 kFile3 = (u128{UINT64_C(0x4020)} << 64) | u128{UINT64_C(0x1008040201008040)};
-        static constexpr u128 kFile2 = (u128{UINT64_C(0x8040)} << 64) | u128{UINT64_C(0x2010080402010080)};
-        static constexpr u128 kFile1 = (u128{UINT64_C(0x10080)} << 64) | u128{UINT64_C(0x4020100804020100)};
+        static constexpr u128 kFile9 = U128(0x100, 0x8040201008040201);
+        static constexpr u128 kFile8 = U128(0x201, 0x80402010080402);
+        static constexpr u128 kFile7 = U128(0x402, 0x100804020100804);
+        static constexpr u128 kFile6 = U128(0x804, 0x201008040201008);
+        static constexpr u128 kFile5 = U128(0x1008, 0x402010080402010);
+        static constexpr u128 kFile4 = U128(0x2010, 0x804020100804020);
+        static constexpr u128 kFile3 = U128(0x4020, 0x1008040201008040);
+        static constexpr u128 kFile2 = U128(0x8040, 0x2010080402010080);
+        static constexpr u128 kFile1 = U128(0x10080, 0x4020100804020100);
 
         friend struct Bitboards;
 

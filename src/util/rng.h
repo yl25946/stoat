@@ -46,8 +46,7 @@ namespace stoat::util::rng {
         [[nodiscard]] constexpr u128 nextU128() {
             const auto high = nextU64();
             const auto low = nextU64();
-
-            return (u128{high} << 64) | u128{low};
+            return toU128(high, low);
         }
 
         [[nodiscard]] constexpr u32 nextU32() {

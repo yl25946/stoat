@@ -74,8 +74,7 @@ namespace stoat::util {
             return fallback::ctz(v);
         }
 
-        const u64 low = v;
-        const u64 high = v >> 64;
+        const auto [high, low] = fromU128(v);
 
         if (low == 0) {
             return 64 + __builtin_ctzll(high);
@@ -85,10 +84,8 @@ namespace stoat::util {
     }
 
     [[nodiscard]] constexpr i32 popcount(u128 v) {
-        const u64 low = v;
-        const u64 high = v >> 64;
-
-        return std::popcount(low) + std::popcount(high);
+        const auto [high, low] = fromU128(v);
+        return std::popcount(high) + std::popcount(low);
     }
 
     [[nodiscard]] constexpr u128 pext(u128 v, u128 mask, i32 shift) {
@@ -97,18 +94,15 @@ namespace stoat::util {
             return fallback::pext(v, mask);
         }
 
-        const u64 vLow = v;
-        const u64 vHigh = v >> 64;
-
-        const u64 maskLow = mask;
-        const u64 maskHigh = mask >> 64;
+        const auto [vHigh, vLow] = fromU128(v);
+        const auto [maskHigh, maskLow] = fromU128(mask);
 
         assert(shift == std::popcount(maskLow));
 
-        const auto low = _pext_u64(vLow, maskLow);
         const auto high = _pext_u64(vHigh, maskHigh);
+        const auto low = _pext_u64(vLow, maskLow);
 
-        return (u128{high} << shift) | u128{low};
+        return (static_cast<u128>(high) << shift) | static_cast<u128>(low);
 #else
         return fallback::pext(v, mask);
 #endif
@@ -124,18 +118,17 @@ namespace stoat::util {
             return fallback::pdep(v, mask);
         }
 
-        const u64 vLow = v;
         const u64 vHigh = v >> shift;
+        const u64 vLow = v;
 
-        const u64 maskLow = mask;
-        const u64 maskHigh = mask >> 64;
+        const auto [maskHigh, maskLow] = fromU128(mask);
 
         assert(shift == std::popcount(maskLow));
 
-        const auto low = _pdep_u64(vLow, maskLow);
         const auto high = _pdep_u64(vHigh, maskHigh);
+        const auto low = _pdep_u64(vLow, maskLow);
 
-        return (u128{high} << 64) | u128{low};
+        return toU128(high, low);
 #else
         return fallback::pext(v, mask);
 #endif
