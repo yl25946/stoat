@@ -16,12 +16,13 @@ option(ST_FAST_PEXT "whether pext and pdep are usably fast on this architecture"
 add_executable(stoat-native src/main.cpp src/types.h src/core.h src/bitboard.h src/util/bits.h src/position.h
 	src/position.cpp src/util/result.h src/util/split.h src/util/split.cpp src/util/parse.h src/move.h src/move.cpp
 	src/util/string_map.h src/attacks/attacks.h src/util/multi_array.h src/movegen.h src/util/static_vector.h
-	src/movegen.cpp src/perft.h src/perft.cpp src/util/timer.h src/util/timer.cpp src/arch.h src/attacks/util.h
-	src/attacks/bmi2/data.h src/attacks/bmi2/bmi2.h src/attacks/bmi2/bmi2.cpp src/rays.h src/keys.h src/util/rng.h
+	src/movegen.cpp src/perft.h src/perft.cpp src/util/timer.h src/util/timer.cpp src/arch.h src/attacks/sliders/util.h
+	src/attacks/sliders/data.h src/attacks/sliders/bmi2.h src/attacks/sliders/bmi2.cpp src/rays.h src/keys.h src/util/rng.h
 	src/protocol/handler.h src/protocol/handler.cpp src/protocol/uci_like.h src/protocol/uci_like.cpp src/pv.h
 	src/protocol/common.h src/protocol/usi.h src/protocol/usi.cpp src/protocol/uci.h src/protocol/uci.cpp
 	src/search.h src/search.cpp src/util/barrier.h src/eval/eval.h src/eval/eval.cpp src/eval/material.h src/limit.h
-	src/limit.cpp src/bench.h src/bench.cpp src/thread.h src/thread.cpp
+	src/limit.cpp src/bench.h src/bench.cpp src/thread.h src/thread.cpp src/attacks/sliders/magics.h
+	src/attacks/sliders/black_magic.h src/attacks/sliders/black_magic.cpp
 )
 
 target_compile_options(stoat-native PUBLIC -march=native $<$<CONFIG:Release>:-flto>)

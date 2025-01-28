@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include "../types.h"
+#include "../../types.h"
 
-#include "../bitboard.h"
-#include "../core.h"
-#include "../util/multi_array.h"
+#include "../../bitboard.h"
+#include "../../core.h"
+#include "../../util/multi_array.h"
 
-namespace stoat::attacks {
+namespace stoat::attacks::sliders {
     namespace internal {
         [[nodiscard]] constexpr Bitboard edges(i32 dir) {
             switch (dir) {
@@ -80,27 +80,14 @@ namespace stoat::attacks {
             return dst;
         }
 
-        template <i32... Dirs>
-        constexpr Bitboard generateMultiSlidingAttacks(Square src, Bitboard occ) {
-            assert(src);
-
-            Bitboard attacks{};
-
-            for (const auto dir : {Dirs...}) {
-                attacks |= generateSlidingAttacks(src, dir, occ);
-            }
-
-            return attacks;
-        }
-
-        template <i32... Dirs>
+        template <i32... kDirs>
         consteval std::array<Bitboard, Squares::kCount> generateEmptyBoardAttacks() {
             std::array<Bitboard, Squares::kCount> dst{};
 
             for (i32 sqIdx = 0; sqIdx < Squares::kCount; ++sqIdx) {
                 const auto sq = Square::fromRaw(sqIdx);
 
-                for (const auto dir : {Dirs...}) {
+                for (const auto dir : {kDirs...}) {
                     const auto attacks = generateSlidingAttacks(sq, dir, Bitboards::kEmpty);
                     dst[sq.idx()] |= attacks;
                 }
@@ -109,6 +96,19 @@ namespace stoat::attacks {
             return dst;
         }
     } // namespace internal
+
+    template <i32... kDirs>
+    constexpr Bitboard generateMultiSlidingAttacks(Square src, Bitboard occ) {
+        assert(src);
+
+        Bitboard attacks{};
+
+        for (const auto dir : {kDirs...}) {
+            attacks |= internal::generateSlidingAttacks(src, dir, occ);
+        }
+
+        return attacks;
+    }
 
     constexpr util::MultiArray<Bitboard, Colors::kCount, Squares::kCount> kEmptyBoardLanceAttacks = {
         internal::generateEmptyBoardAttacks<offsets::kNorth>(), // black
@@ -119,4 +119,4 @@ namespace stoat::attacks {
         generateEmptyBoardAttacks<offsets::kNorthWest, offsets::kNorthEast, offsets::kSouthWest, offsets::kSouthEast>();
     constexpr auto kEmptyBoardRookAttacks =
         internal::generateEmptyBoardAttacks<offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>();
-} // namespace stoat::attacks
+} // namespace stoat::attacks::sliders

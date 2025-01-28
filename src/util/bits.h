@@ -130,7 +130,7 @@ namespace stoat::util {
 
         return toU128(high, low);
 #else
-        return fallback::pext(v, mask);
+        return fallback::pdep(v, mask);
 #endif
     }
 

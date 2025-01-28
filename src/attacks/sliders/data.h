@@ -20,16 +20,24 @@
 
 #include "../../types.h"
 
+#include <span>
+
 #include "../../bitboard.h"
 #include "../../core.h"
-#include "../util.h"
+#include "util.h"
 
-namespace stoat::attacks::sliders::bmi2 {
+#if !ST_HAS_FAST_PEXT
+    #include "magics.h"
+#endif
+
+namespace stoat::attacks::sliders {
     namespace internal {
         struct SquareData {
-            Bitboard mask;
+            u128 mask;
             u32 offset;
+#if ST_HAS_FAST_PEXT
             i32 shift;
+#endif
         };
 
         struct PieceData {
@@ -37,23 +45,45 @@ namespace stoat::attacks::sliders::bmi2 {
             u32 tableSize;
         };
 
-        template <i32... Dirs>
-        consteval PieceData generatePieceData() {
+        template <i32... kDirs>
+        consteval PieceData generatePieceData(
+#if !ST_HAS_FAST_PEXT
+            std::span<const i32, Squares::kCount> shifts
+#endif
+        ) {
             PieceData dst{};
 
             for (i32 sqIdx = 0; sqIdx < Squares::kCount; ++sqIdx) {
                 const auto sq = Square::fromRaw(sqIdx);
                 auto& sqData = dst.squares[sq.idx()];
 
-                for (const auto dir : {Dirs...}) {
-                    const auto attacks = attacks::internal::generateSlidingAttacks(sq, dir, Bitboards::kEmpty);
-                    sqData.mask |= attacks & ~attacks::internal::edges(dir);
+#if !ST_HAS_FAST_PEXT
+                // lances
+                if (shifts[sq.idx()] == 0) {
+                    sqData.offset = dst.tableSize;
+                    ++dst.tableSize;
+                    continue;
+                }
+#endif
+
+                Bitboard mask{};
+
+                for (const auto dir : {kDirs...}) {
+                    const auto attacks = internal::generateSlidingAttacks(sq, dir, Bitboards::kEmpty);
+
+                    mask |= attacks & ~internal::edges(dir);
                 }
 
                 sqData.offset = dst.tableSize;
-                sqData.shift = std::popcount(static_cast<u64>(sqData.mask.raw()));
 
-                dst.tableSize += 1 << sqData.mask.popcount();
+#if ST_HAS_FAST_PEXT
+                sqData.mask = mask.raw();
+                sqData.shift = std::popcount(static_cast<u64>(mask.raw()));
+                dst.tableSize += 1 << mask.popcount();
+#else
+                sqData.mask = ~mask.raw();
+                dst.tableSize += 1 << (128 - shifts[sq.idx()]);
+#endif
             }
 
             return dst;
@@ -61,8 +91,16 @@ namespace stoat::attacks::sliders::bmi2 {
     } // namespace internal
 
     constexpr std::array<internal::PieceData, Colors::kCount> kLanceData = {
-        internal::generatePieceData<offsets::kNorth>(), // black
-        internal::generatePieceData<offsets::kSouth>(), // white
+        internal::generatePieceData<offsets::kNorth>(
+#if !ST_HAS_FAST_PEXT
+            black_magic::lanceShifts(Colors::kBlack)
+#endif
+        ),
+        internal::generatePieceData<offsets::kSouth>(
+#if !ST_HAS_FAST_PEXT
+            black_magic::lanceShifts(Colors::kWhite)
+#endif
+        ),
     };
 
     static_assert(kLanceData[0].tableSize == kLanceData[1].tableSize);
@@ -76,8 +114,15 @@ namespace stoat::attacks::sliders::bmi2 {
 
     constexpr auto kBishopData =
         internal::generatePieceData<offsets::kNorthWest, offsets::kNorthEast, offsets::kSouthWest, offsets::kSouthEast>(
+#if !ST_HAS_FAST_PEXT
+            black_magic::kBishopShifts
+#endif
         );
 
     constexpr auto kRookData =
-        internal::generatePieceData<offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>();
-} // namespace stoat::attacks::sliders::bmi2
+        internal::generatePieceData<offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>(
+#if !ST_HAS_FAST_PEXT
+            black_magic::kRookShifts
+#endif
+        );
+} // namespace stoat::attacks::sliders

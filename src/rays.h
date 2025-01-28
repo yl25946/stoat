@@ -35,8 +35,8 @@ namespace stoat {
             const auto aSq = Square::fromRaw(aIdx);
             const auto aMask = Bitboard::fromSquare(aSq);
 
-            const auto rookAttacks = attacks::kEmptyBoardRookAttacks[aIdx];
-            const auto bishopAttacks = attacks::kEmptyBoardBishopAttacks[aIdx];
+            const auto rookAttacks = attacks::sliders::kEmptyBoardRookAttacks[aIdx];
+            const auto bishopAttacks = attacks::sliders::kEmptyBoardBishopAttacks[aIdx];
 
             for (i32 bIdx = 0; bIdx < Squares::kCount; ++bIdx) {
                 if (aIdx == bIdx) {
@@ -64,8 +64,8 @@ namespace stoat {
             const auto aSq = Square::fromRaw(aIdx);
             const auto aMask = Bitboard::fromSquare(aSq);
 
-            const auto rookAttacks = attacks::kEmptyBoardRookAttacks[aSq.idx()];
-            const auto bishopAttacks = attacks::kEmptyBoardBishopAttacks[aSq.idx()];
+            const auto rookAttacks = attacks::sliders::kEmptyBoardRookAttacks[aSq.idx()];
+            const auto bishopAttacks = attacks::sliders::kEmptyBoardBishopAttacks[aSq.idx()];
 
             for (i32 bIdx = 0; bIdx < Squares::kCount; ++bIdx) {
                 if (aIdx == bIdx) {

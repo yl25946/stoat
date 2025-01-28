@@ -23,7 +23,7 @@
 
 namespace stoat::attacks::sliders::bmi2 {
     namespace {
-        template <const internal::PieceData& kData, i32... Dirs>
+        template <const internal::PieceData& kData, i32... kDirs>
         std::array<Bitboard, kData.tableSize> generateAttacks() {
             std::array<Bitboard, kData.tableSize> dst{};
 
@@ -31,15 +31,15 @@ namespace stoat::attacks::sliders::bmi2 {
                 const auto sq = Square::fromRaw(sqIdx);
                 const auto& sqData = kData.squares[sq.idx()];
 
-                const auto entries = 1 << sqData.mask.popcount();
+                const auto entries = 1 << util::popcount(sqData.mask);
 
                 for (i32 i = 0; i < entries; ++i) {
-                    const auto occ = Bitboard{util::pdep(i, sqData.mask.raw())};
+                    const auto occ = Bitboard{util::pdep(i, sqData.mask)};
 
                     auto& attacks = dst[sqData.offset + i];
 
-                    for (const auto dir : {Dirs...}) {
-                        attacks |= attacks::internal::generateSlidingAttacks(sq, dir, occ);
+                    for (const auto dir : {kDirs...}) {
+                        attacks |= internal::generateSlidingAttacks(sq, dir, occ);
                     }
                 }
             }

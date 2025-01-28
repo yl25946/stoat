@@ -27,9 +27,9 @@
 #include "../util/multi_array.h"
 
 #if ST_HAS_FAST_PEXT
-    #include "bmi2/bmi2.h"
+    #include "sliders/bmi2.h"
 #else
-    #error non-BMI2 attack generator not yet implemented
+    #include "sliders/black_magic.h"
 #endif
 
 namespace stoat::attacks {
@@ -118,9 +118,9 @@ namespace stoat::attacks {
 
         if (std::is_constant_evaluated()) {
             if (c == Colors::kBlack) {
-                return internal::generateMultiSlidingAttacks<offsets::kNorth>(sq, occ);
+                return sliders::generateMultiSlidingAttacks<offsets::kNorth>(sq, occ);
             } else {
-                return internal::generateMultiSlidingAttacks<offsets::kSouth>(sq, occ);
+                return sliders::generateMultiSlidingAttacks<offsets::kSouth>(sq, occ);
             }
         }
 
@@ -149,7 +149,7 @@ namespace stoat::attacks {
         assert(sq);
 
         if (std::is_constant_evaluated()) {
-            return internal::generateMultiSlidingAttacks<
+            return sliders::generateMultiSlidingAttacks<
                 offsets::kNorthWest,
                 offsets::kNorthEast,
                 offsets::kSouthWest,
@@ -163,7 +163,7 @@ namespace stoat::attacks {
         assert(sq);
 
         if (std::is_constant_evaluated()) {
-            return internal::
+            return sliders::
                 generateMultiSlidingAttacks<offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>(sq, occ);
         }
 
