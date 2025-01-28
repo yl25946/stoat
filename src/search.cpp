@@ -41,7 +41,8 @@ namespace stoat {
         }
     } // namespace
 
-    Searcher::Searcher() {
+    Searcher::Searcher(usize ttSizeMb) :
+            m_ttable{ttSizeMb} {
         setThreads(1);
     }
 
@@ -51,14 +52,19 @@ namespace stoat {
     }
 
     void Searcher::newGame() {
-        //
+        // Finalisation (init) clears the TT, so don't clear it twice
+        if (!m_ttable.finalize()) {
+            m_ttable.clear();
+        }
     }
 
     void Searcher::ensureReady() {
-        //
+        m_ttable.finalize();
     }
 
     void Searcher::setThreads(u32 threadCount) {
+        assert(!isSearching());
+
         if (threadCount < 1) {
             threadCount = 1;
         }
@@ -85,6 +91,11 @@ namespace stoat {
         }
     }
 
+    void Searcher::setTtSize(usize mib) {
+        assert(!isSearching());
+        m_ttable.resize(mib);
+    }
+
     void Searcher::startSearch(
         const Position& pos,
         std::span<const u64> keyHistory,
@@ -93,9 +104,25 @@ namespace stoat {
         i32 maxDepth,
         std::unique_ptr<limit::ISearchLimiter> limiter
     ) {
+        if (!limiter) {
+            std::cerr << "Missing limiter" << std::endl;
+            return;
+        }
+
         m_resetBarrier.arriveAndWait();
 
         const std::unique_lock lock{m_searchMutex};
+
+        const auto initStart = util::Instant::now();
+
+        if (m_ttable.finalize()) {
+            const auto initTime = initStart.elapsed();
+            const auto ms = static_cast<u32>(initTime * 1000.0);
+            protocol::currHandler().printInfoString(
+                std::cout,
+                "No newgame or isready before go, lost " + std::to_string(ms) + " ms to TT initialization"
+            );
+        }
 
         m_infinite = infinite;
         m_limiter = std::move(limiter);
@@ -300,7 +327,20 @@ namespace stoat {
 
         auto& curr = thread.stack[ply];
 
+        tt::ProbedEntry ttEntry{};
+        const bool ttHit = m_ttable.probe(ttEntry, pos.key(), ply);
+
+        if (!kPvNode && ttEntry.depth >= depth
+            && (ttEntry.flag == tt::Flag::kExact                                   //
+                || ttEntry.flag == tt::Flag::kUpperBound && ttEntry.score <= alpha //
+                || ttEntry.flag == tt::Flag::kLowerBound && ttEntry.score >= beta))
+        {
+            return ttEntry.score;
+        }
+
         auto bestScore = -kScoreInf;
+
+        auto ttFlag = tt::Flag::kUpperBound;
 
         movegen::MoveList moves{};
         movegen::generateAll(moves, pos);
@@ -359,9 +399,12 @@ namespace stoat {
                     pv.update(move, curr.pv);
                 }
 
-                if (score >= beta) {
-                    break;
-                }
+                ttFlag = tt::Flag::kExact;
+            }
+
+            if (score >= beta) {
+                ttFlag = tt::Flag::kLowerBound;
+                break;
             }
         }
 
@@ -369,6 +412,8 @@ namespace stoat {
             assert(!kRootNode);
             return -kScoreMate + ply;
         }
+
+        m_ttable.put(pos.key(), bestScore, depth, ply, ttFlag);
 
         return bestScore;
     }
@@ -408,6 +453,7 @@ namespace stoat {
             .nodes = totalNodes,
             .score = score,
             .pv = bestThread.lastPv,
+            .hashfull = m_ttable.fullPermille(),
         };
 
         protocol::currHandler().printSearchInfo(std::cout, info);
