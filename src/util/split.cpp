@@ -18,6 +18,8 @@
 
 #include "split.h"
 
+#include <algorithm>
+
 namespace stoat::util {
     void split(std::vector<std::string_view>& dst, std::string_view str, char delim) {
         while (true) {

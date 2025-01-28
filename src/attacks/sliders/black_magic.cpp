@@ -23,16 +23,17 @@
 
 namespace stoat::attacks::sliders::black_magic {
     namespace {
-        template <const internal::PieceData& kData, i32... kDirs>
-        std::array<Bitboard, kData.tableSize> generateAttacks(
+        template <usize kTableSize, i32... kDirs>
+        std::array<Bitboard, kTableSize> generateAttacks(
+            const internal::PieceData& data,
             std::span<const u128, Squares::kCount> magics,
             std::span<const i32, Squares::kCount> shifts
         ) {
-            std::array<Bitboard, kData.tableSize> dst{};
+            std::array<Bitboard, kTableSize> dst{};
 
             for (i32 sqIdx = 0; sqIdx < Squares::kCount; ++sqIdx) {
                 const auto sq = Square::fromRaw(sqIdx);
-                const auto& sqData = kData.squares[sq.idx()];
+                const auto& sqData = data.squares[sq.idx()];
 
                 const auto magic = magics[sq.idx()];
                 const auto shift = shifts[sq.idx()];
@@ -60,28 +61,30 @@ namespace stoat::attacks::sliders::black_magic {
     } // namespace
 
     const util::MultiArray<Bitboard, Colors::kCount, kLanceDataTableSize> g_lanceAttacks = {
-        generateAttacks<lanceData(Colors::kBlack), offsets::kNorth>(
+        generateAttacks<kLanceDataTableSize, offsets::kNorth>(
+            lanceData(Colors::kBlack),
             lanceMagics(Colors::kBlack),
             lanceShifts(Colors::kBlack)
         ),
-        generateAttacks<lanceData(Colors::kWhite), offsets::kSouth>(
+        generateAttacks<kLanceDataTableSize, offsets::kSouth>(
+            lanceData(Colors::kWhite),
             lanceMagics(Colors::kWhite),
             lanceShifts(Colors::kWhite)
         ),
     };
 
     const std::array<Bitboard, kBishopData.tableSize> g_bishopAttacks = generateAttacks<
-        kBishopData,
+        kBishopData.tableSize,
         offsets::kNorthWest,
         offsets::kNorthEast,
         offsets::kSouthWest,
-        offsets::kSouthEast>(kBishopMagics, kBishopShifts);
+        offsets::kSouthEast>(kBishopData, kBishopMagics, kBishopShifts);
 
     const std::array<Bitboard, kRookData.tableSize> g_rookAttacks =
-        generateAttacks<kRookData, offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>(
+        generateAttacks<kRookData.tableSize, offsets::kNorth, offsets::kSouth, offsets::kWest, offsets::kEast>(
+            kRookData,
             kRookMagics,
             kRookShifts
         );
 } // namespace stoat::attacks::sliders::black_magic
-
 #endif

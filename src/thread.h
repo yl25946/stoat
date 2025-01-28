@@ -67,7 +67,7 @@ namespace stoat {
         PvList pv{};
     };
 
-    struct alignas(CacheLineSize) ThreadData {
+    struct alignas(kCacheLineSize) ThreadData {
         ThreadData();
 
         u32 id{};
