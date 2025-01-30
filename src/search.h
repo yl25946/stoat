@@ -53,6 +53,7 @@ namespace stoat {
 
         void setThreads(u32 threadCount);
         void setTtSize(usize mib);
+        void setCuteChessWorkaround(bool enabled);
 
         void startSearch(
             const Position& pos,
@@ -70,6 +71,8 @@ namespace stoat {
 
     private:
         std::vector<ThreadData> m_threads{};
+
+        bool m_cuteChessWorkaround{};
 
         mutable std::mutex m_searchMutex{};
         bool m_searching{};

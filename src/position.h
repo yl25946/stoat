@@ -162,7 +162,11 @@ namespace stoat {
             return pieceBb(PieceTypes::kKing, c).lsb();
         }
 
-        [[nodiscard]] SennichiteStatus testSennichite(std::span<const u64> keyHistory, i32 limit = 16) const;
+        [[nodiscard]] SennichiteStatus testSennichite(
+            bool cuteChessWorkaround,
+            std::span<const u64> keyHistory,
+            i32 limit = 16
+        ) const;
 
         [[nodiscard]] bool isPseudolegal(Move move) const;
         [[nodiscard]] bool isLegal(Move move) const;

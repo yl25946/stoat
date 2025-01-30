@@ -97,6 +97,11 @@ namespace stoat {
         m_ttable.resize(mib);
     }
 
+    void Searcher::setCuteChessWorkaround(bool enabled) {
+        assert(!isSearching());
+        m_cuteChessWorkaround = enabled;
+    }
+
     void Searcher::startSearch(
         const Position& pos,
         std::span<const u64> keyHistory,
@@ -369,7 +374,7 @@ namespace stoat {
             ++legalMoves;
 
             const auto [newPos, guard] = thread.applyMove(pos, move);
-            const auto sennichite = newPos.testSennichite(thread.keyHistory);
+            const auto sennichite = newPos.testSennichite(m_cuteChessWorkaround, thread.keyHistory);
 
             Score score;
 
@@ -474,7 +479,7 @@ namespace stoat {
             }
 
             const auto [newPos, guard] = thread.applyMove(pos, move);
-            const auto sennichite = newPos.testSennichite(thread.keyHistory);
+            const auto sennichite = newPos.testSennichite(m_cuteChessWorkaround, thread.keyHistory);
 
             Score score;
 

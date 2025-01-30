@@ -263,7 +263,8 @@ namespace stoat {
         return newPos;
     }
 
-    SennichiteStatus Position::testSennichite(std::span<const u64> keyHistory, i32 limit) const {
+    SennichiteStatus Position::testSennichite(bool cuteChessWorkaround, std::span<const u64> keyHistory, i32 limit)
+        const {
         const auto end = std::max(0, static_cast<i32>(keyHistory.size()) - limit - 1);
 
         i32 repetitions = 1;
@@ -272,7 +273,13 @@ namespace stoat {
             if (keyHistory[i] == key()) {
                 --repetitions;
                 if (repetitions == 0) {
-                    return m_consecutiveChecks[stm().idx()] >= 2 ? SennichiteStatus::kWin : SennichiteStatus::kDraw;
+                    // Older cutechess versions do not handle perpetuals
+                    // properly - work around that to avoid illegal moves
+                    if (cuteChessWorkaround) {
+                        return isInCheck() ? SennichiteStatus::kWin : SennichiteStatus::kDraw;
+                    } else {
+                        return m_consecutiveChecks[stm().idx()] >= 2 ? SennichiteStatus::kWin : SennichiteStatus::kDraw;
+                    }
                 }
             }
         }

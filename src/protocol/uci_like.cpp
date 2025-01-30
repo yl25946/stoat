@@ -60,6 +60,10 @@ namespace stoat::protocol {
         printOptionName(std::cout, "Threads");
         std::cout << " type spin default 1 min 1 max 1\n";
 
+        std::cout << "option name ";
+        printOptionName(std::cout, "CuteChessWorkaround");
+        std::cout << " type check default false\n";
+
         finishInitialInfo();
     }
 
@@ -421,9 +425,17 @@ namespace stoat::protocol {
             if (const auto newHash = util::tryParse<usize>(value)) {
                 const auto size = tt::kTtSizeRange.clamp(*newHash);
                 m_state.searcher->setTtSize(size);
+            } else {
+                std::cerr << "Invalid hash size '" << value << "'" << std::endl;
             }
         } else if (name == "threads") {
             //
+        } else if (name == "cutechessworkaround") {
+            if (const auto newCcWorkaround = util::tryParseBool(value)) {
+                m_state.searcher->setCuteChessWorkaround(*newCcWorkaround);
+            } else {
+                std::cerr << "Invalid check value '" << value << "'" << std::endl;
+            }
         } else {
             std::cerr << "Unknown option '" << args[1] << "'" << std::endl;
         }
