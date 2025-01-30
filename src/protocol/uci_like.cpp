@@ -368,7 +368,7 @@ namespace stoat::protocol {
 
         const auto valueIdx = std::distance(args.begin(), std::ranges::find(args, "value"));
 
-        if (valueIdx == 2) {
+        if (valueIdx == 1) {
             std::cerr << "Missing option name" << std::endl;
             return;
         }
@@ -378,11 +378,11 @@ namespace stoat::protocol {
             return;
         }
 
-        if (valueIdx > 3) {
+        if (valueIdx > 2) {
             std::ostringstream str{};
 
             bool first = true;
-            for (usize i = 3; i < valueIdx; ++i) {
+            for (usize i = 2; i < valueIdx; ++i) {
                 if (!first) {
                     str << ' ';
                 } else {
