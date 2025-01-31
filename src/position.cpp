@@ -225,8 +225,6 @@ namespace stoat {
     Position Position::applyMove(Move move) const {
         auto newPos = *this;
 
-        //s_debugKeys = true;
-
         const auto stm = this->stm();
 
         if (move.isDrop()) {
@@ -291,7 +289,6 @@ namespace stoat {
         assert(!move.isNull());
 
         const auto stm = this->stm();
-        const auto nstm = this->stm().flip();
 
         const auto occ = occupancy();
 
@@ -349,6 +346,11 @@ namespace stoat {
         }
 
         if (move.isPromo()) {
+            // can't promote an already-promoted piece
+            if (moving.isPromoted()) {
+                return false;
+            }
+
             // can only promote when moving into, in, or out of our promo area
             const auto promoArea = Bitboards::promoArea(stm);
             if (!promoArea.getSquare(move.from()) && !promoArea.getSquare(move.to())) {
