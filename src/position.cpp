@@ -345,6 +345,13 @@ namespace stoat {
             return false;
         }
 
+        const auto captured = pieceOn(move.to());
+
+        // can't capture our own piece, or a king
+        if (captured && (captured.color() == stm || captured.type() == PieceTypes::kKing)) {
+            return false;
+        }
+
         if (move.isPromo()) {
             // can't promote a gold, a king, or an already-promoted piece
             if (!moving.type().canPromote()) {
