@@ -10,7 +10,11 @@ SOURCES := src/main.cpp src/position.cpp src/util/split.cpp src/move.cpp src/mov
 SUFFIX :=
 
 CXX := clang++
-CXXFLAGS := -std=c++20 -O3 -flto -fconstexpr-steps=4194304 -DNDEBUG -DST_VERSION=$(VERSION)
+
+CXXFLAGS := -std=c++20 -flto -fconstexpr-steps=4194304 -DST_VERSION=$(VERSION)
+
+CXXFLAGS_RELEASE := -O3 -DNDEBUG
+CXXFLAGS_SANITIZER := -O1 -g -fsanitize=address -fsanitize=undefined
 
 CXXFLAGS_NATIVE := -DST_NATIVE -march=native
 
@@ -59,7 +63,7 @@ ifeq ($(COMMIT_HASH),on)
 endif
 
 define build
-    $(CXX) $(CXXFLAGS) $(CXXFLAGS_$1) $(LDFLAGS) -o $(EXE)$(if $(NO_EXE_SET),-$2)$(SUFFIX) $^
+    $(CXX) $(CXXFLAGS) $(CXXFLAGS_$1) $(CXXFLAGS_$2) $(LDFLAGS) -o $(EXE)$(if $(NO_EXE_SET),-$3)$(SUFFIX) $^
 endef
 
 all: native
@@ -69,9 +73,12 @@ all: native
 .DEFAULT_GOAL := native
 
 $(EXE): $(SOURCES)
-	$(call build,NATIVE,native)
+	$(call build,NATIVE,RELEASE,native)
 
 native: $(EXE)
+
+sanitizer: $(SOURCES)
+	$(call build,NATIVE,SANITIZER,native)
 
 clean:
 

@@ -38,7 +38,7 @@ namespace stoat::attacks::sliders::black_magic {
                 const auto magic = magics[sq.idx()];
                 const auto shift = shifts[sq.idx()];
 
-                const auto maxEntries = 1 << util::popcount(~sqData.mask);
+                const auto maxEntries = sqData.mask == 0 ? 1 : 1 << util::popcount(~sqData.mask);
 
                 for (i32 i = 0; i < maxEntries; ++i) {
                     const auto occ = Bitboard{util::pdep(i, ~sqData.mask)};
