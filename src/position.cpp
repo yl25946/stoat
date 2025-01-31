@@ -346,8 +346,8 @@ namespace stoat {
         }
 
         if (move.isPromo()) {
-            // can't promote an already-promoted piece
-            if (moving.isPromoted()) {
+            // can't promote a gold, a king, or an already-promoted piece
+            if (!moving.type().canPromote()) {
                 return false;
             }
 
