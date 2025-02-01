@@ -417,11 +417,11 @@ namespace stoat {
                         score = -search(thread, newPos, curr.pv, newDepth, ply + 1, -alpha - 1, -alpha);
                     }
                 } else if (!kPvNode || legalMoves > 1) {
-                    score = -search(thread, newPos, curr.pv, depth - 1, ply + 1, -alpha - 1, -alpha);
+                    score = -search(thread, newPos, curr.pv, newDepth, ply + 1, -alpha - 1, -alpha);
                 }
 
                 if (kPvNode && (legalMoves == 1 || score > alpha)) {
-                    score = -search<true>(thread, newPos, curr.pv, depth - 1, ply + 1, -beta, -alpha);
+                    score = -search<true>(thread, newPos, curr.pv, newDepth, ply + 1, -beta, -alpha);
                 }
             }
 
