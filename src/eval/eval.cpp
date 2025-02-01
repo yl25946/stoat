@@ -19,11 +19,15 @@
 #include "eval.h"
 
 #include <algorithm>
+#include <cmath>
 
+#include "../attacks/attacks.h"
 #include "material.h"
 
 namespace stoat::eval {
     namespace {
+        constexpr Score kKingRingPieceScale = 8;
+
         [[nodiscard]] Score evalMaterial(const Position& pos, Color c) {
             const auto materialCount = [&](PieceType pt) {
                 const auto count = pos.pieceBb(pt, c).popcount();
@@ -64,6 +68,18 @@ namespace stoat::eval {
 
             return score;
         }
+
+        [[nodiscard]] Score evalKingSafety(const Position& pos, Color c) {
+            const auto stmPieces = pos.colorBb(c);
+            const auto kingRing = attacks::kingAttacks(pos.king(c));
+
+            const auto kingRingSquareCount = static_cast<f64>(kingRing.popcount());
+            const auto kingRingPieceCount = static_cast<f64>((stmPieces & kingRing).popcount());
+
+            const auto filled = 8.0 * std::min(kingRingPieceCount / kingRingSquareCount, 0.75);
+
+            return kKingRingPieceScale * static_cast<i32>(std::pow(filled, 1.6));
+        }
     } // namespace
 
     Score staticEval(const Position& pos) {
@@ -73,6 +89,7 @@ namespace stoat::eval {
         Score score{};
 
         score += evalMaterial(pos, stm) - evalMaterial(pos, nstm);
+        score += evalKingSafety(pos, stm) - evalKingSafety(pos, nstm);
 
         return std::clamp(score, -kScoreWin + 1, kScoreWin - 1);
     }
