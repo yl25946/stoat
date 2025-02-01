@@ -355,6 +355,7 @@ namespace stoat {
         }
 
         auto& curr = thread.stack[ply];
+        const auto* parent = kRootNode ? nullptr : &thread.stack[ply - 1];
 
         tt::ProbedEntry ttEntry{};
         const bool ttHit = m_ttable.probe(ttEntry, pos.key(), ply);
@@ -369,8 +370,20 @@ namespace stoat {
 
         if (!kPvNode && !pos.isInCheck()) {
             const auto staticEval = eval::staticEval(pos);
+
             if (depth <= 4 && staticEval - 120 * depth >= beta) {
                 return staticEval;
+            }
+
+            if (depth >= 4 && staticEval >= beta && !parent->move.isNull()) {
+                static constexpr i32 kR = 3;
+
+                const auto [newPos, guard] = thread.applyNullMove(ply, pos);
+                const auto score = -search(thread, newPos, curr.pv, depth - kR, ply + 1, -beta, -beta + 1);
+
+                if (score >= beta) {
+                    return score > kScoreWin ? beta : score;
+                }
             }
         }
 
@@ -403,7 +416,7 @@ namespace stoat {
 
             ++legalMoves;
 
-            const auto [newPos, guard] = thread.applyMove(pos, move);
+            const auto [newPos, guard] = thread.applyMove(ply, pos, move);
             const auto sennichite = newPos.testSennichite(m_cuteChessWorkaround, thread.keyHistory);
 
             Score score;
@@ -521,7 +534,7 @@ namespace stoat {
                 continue;
             }
 
-            const auto [newPos, guard] = thread.applyMove(pos, move);
+            const auto [newPos, guard] = thread.applyMove(ply, pos, move);
             const auto sennichite = newPos.testSennichite(m_cuteChessWorkaround, thread.keyHistory);
 
             Score score;
