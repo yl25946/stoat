@@ -18,6 +18,7 @@
 
 #include "uci_like.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -264,12 +265,14 @@ namespace stoat::protocol {
                     return;
                 }
 
-                u64 maxTimeMs{};
+                i64 maxTimeMs{};
 
                 if (!util::tryParse(maxTimeMs, args[i])) {
                     std::cerr << "Invalid move time limit '" << args[i] << "'" << std::endl;
                     return;
                 }
+
+                maxTimeMs = std::max<i64>(maxTimeMs, 1);
 
                 const auto maxTimeSec = static_cast<f64>(maxTimeMs) / 1000.0;
                 limiter->addLimiter<limit::MoveTimeLimiter>(startTime, maxTimeSec);
@@ -279,13 +282,14 @@ namespace stoat::protocol {
                     return;
                 }
 
-                u64 btimeMs{};
+                i64 btimeMs{};
 
                 if (!util::tryParse(btimeMs, args[i])) {
                     std::cerr << "Invalid " << btimeToken() << " limit '" << args[i] << "'" << std::endl;
                     return;
                 }
 
+                btimeMs = std::max<i64>(btimeMs, 1);
                 btime = static_cast<f64>(btimeMs) / 1000.0;
             } else if (args[i] == wtimeToken()) {
                 if (++i == args.size()) {
@@ -293,13 +297,14 @@ namespace stoat::protocol {
                     return;
                 }
 
-                u64 wtimeMs{};
+                i64 wtimeMs{};
 
                 if (!util::tryParse(wtimeMs, args[i])) {
                     std::cerr << "Invalid " << wtimeToken() << " limit '" << args[i] << "'" << std::endl;
                     return;
                 }
 
+                wtimeMs = std::max<i64>(wtimeMs, 1);
                 wtime = static_cast<f64>(wtimeMs) / 1000.0;
             } else if (args[i] == bincToken()) {
                 if (++i == args.size()) {
@@ -307,13 +312,14 @@ namespace stoat::protocol {
                     return;
                 }
 
-                u64 bincMs{};
+                i64 bincMs{};
 
                 if (!util::tryParse(bincMs, args[i])) {
                     std::cerr << "Invalid " << bincToken() << " limit '" << args[i] << "'" << std::endl;
                     return;
                 }
 
+                bincMs = std::max<i64>(bincMs, 0);
                 binc = static_cast<f64>(bincMs) / 1000.0;
             } else if (args[i] == wincToken()) {
                 if (++i == args.size()) {
@@ -321,13 +327,14 @@ namespace stoat::protocol {
                     return;
                 }
 
-                u64 wincMs{};
+                i64 wincMs{};
 
                 if (!util::tryParse(wincMs, args[i])) {
                     std::cerr << "Invalid " << wincToken() << " limit '" << args[i] << "'" << std::endl;
                     return;
                 }
 
+                wincMs = std::max<i64>(wincMs, 0);
                 winc = static_cast<f64>(wincMs) / 1000.0;
             }
         }
