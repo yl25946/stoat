@@ -881,10 +881,22 @@ namespace stoat {
                 const auto c = hand[curr];
                 if (std::isdigit(c)) {
                     if (curr == hand.size() - 1) {
-                        return util::err<SfenError>("digit found at end of hand with no matching piece");
+                        return util::err<SfenError>("piece count found at end of hand with no matching piece");
                     }
 
                     nextCount = *util::tryParseDigit(c);
+
+                    const auto next = hand[curr + 1];
+                    if (std::isdigit(next)) {
+                        if (curr == hand.size() - 2) {
+                            return util::err<SfenError>("piece count found at end of hand with no matching piece");
+                        }
+
+                        nextCount *= 10;
+                        nextCount += *util::tryParseDigit(next);
+
+                        ++curr;
+                    }
 
                     if (nextCount == 0) {
                         return util::err<SfenError>("0 found in hand");
