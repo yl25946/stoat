@@ -435,6 +435,11 @@ namespace stoat {
             }
 
             const auto piece = unpromotedFromChar(str.back());
+
+            if (str.length() == 2 && !piece.type().canPromote()) {
+                return Piece{kNoneId};
+            }
+
             return str.length() == 2 ? piece.promoted() : piece;
         }
 
