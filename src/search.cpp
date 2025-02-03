@@ -434,6 +434,7 @@ namespace stoat {
 
             if (sennichite == SennichiteStatus::kWin) {
                 // illegal perpetual
+                --legalMoves;
                 continue;
             } else if (sennichite == SennichiteStatus::kDraw) {
                 score = drawScore(thread.loadNodes());
