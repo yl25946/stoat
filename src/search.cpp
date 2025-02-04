@@ -377,7 +377,7 @@ namespace stoat {
             const auto staticEval = eval::staticEval(pos);
 
             if (depth <= 4 && staticEval - 120 * depth >= beta) {
-                return staticEval;
+                return staticEval + (staticEval - beta) / 3;
             }
 
             if (depth >= 4 && staticEval >= beta && !parent->move.isNull()) {
