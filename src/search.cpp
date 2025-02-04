@@ -416,7 +416,8 @@ namespace stoat {
             const auto baseLmr = s_lmrTable[depth][std::min<u32>(legalMoves, 63)];
 
             if (!kRootNode && bestScore > -kScoreWin) {
-                if (!pos.isCapture(move) && !see::see(pos, move, -20 * depth * depth)) {
+                const auto seeThreshold = pos.isCapture(move) ? -100 * depth * depth : -20 * depth * depth;
+                if (!see::see(pos, move, seeThreshold)) {
                     continue;
                 }
 
