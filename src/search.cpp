@@ -373,9 +373,9 @@ namespace stoat {
             --depth;
         }
 
-        if (!kPvNode && !pos.isInCheck()) {
-            const auto staticEval = eval::staticEval(pos);
+        const auto staticEval = eval::staticEval(pos);
 
+        if (!kPvNode && !pos.isInCheck()) {
             if (depth <= 4 && staticEval - 120 * depth >= beta) {
                 return staticEval;
             }
@@ -417,6 +417,12 @@ namespace stoat {
 
             if (!kRootNode && bestScore > -kScoreWin) {
                 if (!pos.isCapture(move) && !see::see(pos, move, -20 * depth * depth)) {
+                    continue;
+                }
+
+                if (!pos.isCapture(move) && !pos.isInCheck() && alpha < 2000 && depth <= 4
+                    && staticEval + 150 + 100 * depth <= alpha)
+                {
                     continue;
                 }
             }
