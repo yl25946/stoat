@@ -451,7 +451,18 @@ namespace stoat {
                     score = -search(thread, newPos, curr.pv, reduced, ply + 1, -alpha - 1, -alpha);
 
                     if (score > alpha && reduced < newDepth) {
-                        score = -search(thread, newPos, curr.pv, newDepth, ply + 1, -alpha - 1, -alpha);
+                        const bool kDoDeeperSearch = score > (bestScore + 40 + 2 * newDepth);
+                        const bool kDoShallowerSearch = score < bestScore + 10;
+
+                        score = -search(
+                            thread,
+                            newPos,
+                            curr.pv,
+                            newDepth + kDoDeeperSearch - kDoShallowerSearch,
+                            ply + 1,
+                            -alpha - 1,
+                            -alpha
+                        );
                     }
                 } else if (!kPvNode || legalMoves > 1) {
                     score = -search(thread, newPos, curr.pv, newDepth, ply + 1, -alpha - 1, -alpha);
